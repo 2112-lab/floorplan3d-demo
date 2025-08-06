@@ -70,11 +70,11 @@
                   class="mb-2"
                 >
                   <v-icon small class="mr-1">mdi-import</v-icon>
-                  Import File
+                  Import
                 </v-btn>
                 
                 <v-btn
-                  color="primary"
+                  color="red-lighten-1"
                   @click="resetScene"
                   block
                   class="mb-2"
@@ -628,10 +628,28 @@ export default {
 
     // Mock methods for the new Tools panel
     resetScene() {
-      if (this.threejsRenderer) {
-        // Add your scene reset logic here
-        this.showSnackbar('Scene reset successfully', 'success');
+      if(Object.keys(this.$konvaStore.documents).length === 0) {
+        return;
       }
+
+      // Clear Three.js content group
+      if (this.threestore.scene) {
+        const contentGroup = this.threestore.scene.getObjectByName("contentGroup");
+        this.threestore.floorplan3d.clearScene(contentGroup);
+      }
+
+      // Reset output stage to 1 (walls view)
+      // this.editStore.setOutputStage(1);
+
+      // Clear console output
+      this.consoleStore.setConsoleOutput("");
+
+      this.$konvaStore.documents = [];
+
+      // Use the konva-renderer's resetKonva method.
+      this.$eventBus.emit('resetKonva');
+      
+      this.showSnackbar('Scene reset successfully', 'success');
     },
 
     centerView() {
@@ -655,6 +673,11 @@ export default {
     stageZoomToFit() {
       // Existing method - keeping as is
       // Add your zoom to fit logic here
+    },
+  },
+  computed: {
+    $eventBus() {
+      return useEventBusStore();
     },
   },
 };
