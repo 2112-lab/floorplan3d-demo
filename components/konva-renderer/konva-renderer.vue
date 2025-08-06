@@ -250,8 +250,8 @@ export default {
         layer.destroy();
       });
       
-      // Reset the konva store documents
-      this.$konvaStore.documents = {};
+      // Use the new clearAllDocuments method for proper cleanup
+      this.$konvaStore.clearAllDocuments();
 
       this.stage = null;
 

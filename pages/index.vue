@@ -179,45 +179,14 @@ export default {
     }
   },
   methods: {
-    stageZoomToFit() {
-      // Simple zoom to fit implementation
-      if (this.konvaRenderer && this.konvaRenderer.stage) {
-        const stage = this.konvaRenderer.stage;
-        const baseLayer = this.$konvaStore.baseLayer;
-        
-        if (baseLayer && baseLayer.children.length > 0) {
-          // Get the bounding box of all content
-          const box = baseLayer.getClientRect();
-          
-          if (box.width > 0 && box.height > 0) {
-            // Calculate the scale to fit content within stage
-            const stageWidth = stage.width();
-            const stageHeight = stage.height();
-            
-            const scaleX = stageWidth / box.width;
-            const scaleY = stageHeight / box.height;
-            const scale = Math.min(scaleX, scaleY) * 0.8; // 0.8 to leave some margin
-            
-            // Set the scale
-            stage.scale({ x: scale, y: scale });
-            
-            // Center the content
-            const centerX = (stageWidth - box.width * scale) / 2;
-            const centerY = (stageHeight - box.height * scale) / 2;
-            
-            stage.position({
-              x: centerX - box.x * scale,
-              y: centerY - box.y * scale,
-            });
-            
-            stage.batchDraw();
-          }
-        }
-      }
-    },
-
     async autoImportSvg() {
       try {
+        // Check if documents already exist (prevents duplication during hot reload)
+        if (Object.keys(this.$konvaStore.documents).length > 0) {
+          console.log('Documents already exist, skipping auto-import to prevent duplication');
+          return;
+        }
+        
         // Fetch the SVG file from the public directory
         const response = await fetch('/floorplan-import-samples/FP3D-00-07.svg');
         if (!response.ok) {
@@ -242,6 +211,12 @@ export default {
 
         // Process vector documents (rooms and walls)
         for (let doc of sortedVectorDocs) {
+          // Check if document with this ID already exists (prevents duplication during hot reload)
+          if (this.$konvaStore.documents[doc.id]) {
+            console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
+            continue;
+          }
+          
           // Ensure baseLayer exists before using it
           if (!this.$konvaStore.baseLayer) {
             console.error('Konva baseLayer not initialized. Cannot import vector documents.');
@@ -306,6 +281,12 @@ export default {
 
           // Process vector documents (rooms and walls)
           for (let doc of sortedVectorDocs) {
+            // Check if document with this ID already exists (prevents duplication)
+            if (this.$konvaStore.documents[doc.id]) {
+              console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
+              continue;
+            }
+            
             // Ensure baseLayer exists before using it
             if (!this.$konvaStore.baseLayer) {
               console.error('Konva baseLayer not initialized. Cannot import vector documents.');
@@ -350,7 +331,8 @@ export default {
         this.threestore.floorplan3d.clearScene(contentGroup);
       }
 
-      this.$konvaStore.documents = [];
+      // Use the new clearAllDocuments method instead of direct assignment
+      this.$konvaStore.clearAllDocuments();
 
       // Use the konva-renderer's resetKonva method.
       this.$eventBus.emit('resetKonva');

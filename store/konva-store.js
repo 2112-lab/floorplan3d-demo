@@ -158,6 +158,12 @@ export const useKonvaStore = defineStore("konvaStore", {
     },
 
     addDocument(doc_id, name, configs) {
+      // Check if document already exists to prevent duplication
+      if (this.documents[doc_id]) {
+        console.warn(`Document with ID ${doc_id} already exists. Skipping to prevent duplication.`);
+        return;
+      }
+      
       // First, shift all existing documents' order values up by 1
       // Object.values(this.documents).forEach((doc) => {
       //   // doc.ui.order += 1;
@@ -599,6 +605,21 @@ export const useKonvaStore = defineStore("konvaStore", {
       if (this.documents[doc_id]) {
         this.documents[doc_id].selected = selected;
       }
+    },
+
+    // Clear all documents (useful for resets and preventing duplicates)
+    clearAllDocuments() {
+      // Clean up Konva resources for each document
+      Object.values(this.documents).forEach(doc => {
+        if (doc.konva && doc.konva.layer) {
+          doc.konva.layer.destroy();
+        }
+      });
+      
+      // Clear the documents object
+      this.documents = {};
+      
+      console.log('All documents cleared from store');
     },
   },
 });
