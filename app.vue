@@ -2,13 +2,11 @@
   <NuxtLayout>
     <v-app>
       <NuxtPage />
-      <GlobalSnackbar />
     </v-app>
   </NuxtLayout>
 </template>
 
 <script>
-import GlobalSnackbar from './components/global-snackbar/global-snackbar.vue';
 </script>
 
 

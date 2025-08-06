@@ -17,10 +17,7 @@
 <script>
 import Konva from "konva";
 import {
-  handleNoSvgAvailable,
   initializeStage,
-  svgToKonvaObjects,
-  renderSvgInKonva,
 } from "~/lib/konva/konva";
 import {debounce,   getActiveLayer} from "~/lib/konva/utils"
 import {setupZoom, setupPanning} from "~/lib/konva/pan-zoom"
@@ -31,7 +28,6 @@ import { toSvg } from "~/lib/svg";;
 import { useEditStore } from "~/store/edit";
 import { useKonvaStore } from "~/store/konva-store";
 import { useEventBusStore } from "~/store/event-bus";
-import { useNotificationStore } from "~/store/notification";
 
 export default {
   props: {
@@ -51,7 +47,6 @@ export default {
       textLayer: null,
       editStore: useEditStore(),
       konvaStore: useKonvaStore(),
-      notificationStore: useNotificationStore(),
     };
   },
   mounted() {
@@ -129,17 +124,6 @@ export default {
         baseLayer.batchDraw();
       }
       
-      // Rest of the keydown event handler (Ctrl+Z, etc.)
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        const layer = getActiveLayer();
-        if (!layer) return;
-        if (this.$konvaStore.undo()) {
-          // Re-render based on output stage
-          const objects = this.$konvaStore.getActiveDocument().konva.objects
-          renderSvgInKonva(layer, objects)
-        }
-      }
     });
   },
   beforeDestroy() {
@@ -206,110 +190,6 @@ export default {
       },
       deep: true,
     },
-    // svgMode:{
-    //   handler(mode){
-    //     const doc = this.$konvaStore.getActiveDocument();
-    //     const doc_id = doc.id;
-    //     if(!doc_id) return;
-    //     const svg = toSvg(doc.konva.objects, mode)
-    //     if(mode === "path"){
-    //       this.$konvaStore.setSvgPath(doc_id, svg);
-    //       // Get the document ID
-    //       this.$consoleStore.setConsoleOutput(svg, doc_id);
-    //     }else if(mode === "polyline"){
-    //       this.$konvaStore.setSvgPolyline(doc_id, svg);
-    //       // Get the document ID
-    //       this.$consoleStore.setConsoleOutput(svg, doc_id);
-    //     }
-    //   },
-    //   immediate: true,
-    // },    
-    // sizeProp: {
-    //   async handler(size) {
-    //     await this.$nextTick();
-    //     this.resizeKonva();
-    //   },
-    //   immediate: true,
-    // },
-    // "$editStore.outputStage": {
-    //   async handler() {
-    //     const outputStage = this.editStore.outputStage;
-
-    //     // Skip document creation if the stage change is triggered by the extraction process
-    //     // This prevents duplicate creation of walls and rooms
-    //     if (this.$konvaStore.skipStageDocumentCreation) {
-    //       console.log("Skipping document creation due to extraction process");
-    //       return; // Skip document creation but do NOT reset the flag yet
-    //     }
-  
-    //     if (outputStage === 1) {
-    //      const doc_id = `doc_${Object.keys(this.$konvaStore.documents).length + 1}`;
-    //      const svg = this.$konvaStore.wallsSVG;
-    //      const wallsLayer = new Konva.Layer({ name: "walls" });
-    //      this.stage.add(wallsLayer)
-    //      this.$konvaStore.addDocument(doc_id, "walls", {
-    //         konva: {
-    //             layer: wallsLayer
-    //         },
-    //         ui:{
-    //           displayName: "Walls",
-    //           order: 2,
-    //           menuOpen: false,
-    //         }
-    //      })
-    //      const {objects, transformObject} = svgToKonvaObjects(svg, doc_id);
-    //      this.$konvaStore.setDocumentActive(doc_id);
-    //      const activeDoc = this.$konvaStore.getActiveDocument()
-    //      const layer = activeDoc.konva.layer
-    //      renderSvgInKonva(layer, objects, transformObject)
-    //      centerLayer(activeDoc.konva.layer)
-
-    //     } 
-    //     else if (outputStage === 2) {
-    //       const doc_id = `doc_${Object.keys(this.$konvaStore.documents).length + 1}`;
-    //       const svg = this.$konvaStore.roomsSVG;
-    //       const roomsLayer = new Konva.Layer({ name: "rooms" });
-    //       this.stage.add(roomsLayer)
-    //       this.$konvaStore.addDocument(doc_id, "rooms", {
-    //           konva: {
-    //               layer: roomsLayer
-    //           },
-    //           ui:{
-    //             displayName: "Rooms",
-    //             order: 2,
-    //             menuOpen: false,
-    //           }
-    //       })
-    //       const {objects, transformObject} = svgToKonvaObjects(svg, doc_id);
-    //       this.$konvaStore.setDocumentActive(doc_id);
-    //       const activeDoc = this.$konvaStore.getActiveDocument()
-    //       const layer = activeDoc.konva.layer
-    //       renderSvgInKonva(layer, objects, transformObject)
-    //       centerLayer(activeDoc.konva.layer)
-    //     }
-
-    //     createMarqueeSelector(this.stage);
-
-    //     // Render grid after stage change if grid is enabled
-    //     const { value } = this.editStore.checkboxes.find(
-    //       (x) => x.name === "2dgrid"
-    //     );
-    //     if (value) {
-    //       if(!this.$konvaStore.gridLayer) return;
-    //       const gridLayer = this.konvaStore.gridLayer
-    //       if(!gridLayer) return;
-    //       renderGrid(gridLayer);
-    //     }
-    //   },
-    //   immediate: true,
-    // },
-    // "$editStore.viewport": {
-    //   handler(viewport) {
-    //     if (viewport.secondary === "konva") {
-    //       this.resizeKonva();
-    //     }
-    //   },
-    // },
     "gridEnabled2d": {
       handler(enabled) {
         if(enabled){

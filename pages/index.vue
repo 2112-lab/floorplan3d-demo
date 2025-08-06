@@ -122,7 +122,6 @@ import LayersPanel  from "~/components/documents-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { useKonvaStore } from "~/store/konva-store";
 import { useEventBusStore } from "~/store/event-bus";
-import { useNotificationStore } from "~/store/notification";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
 import Floorplan3D from "~/lib/Floorplan3D";
@@ -176,9 +175,6 @@ export default {
     },
     $eventBus() {
       return useEventBusStore();
-    },
-    notificationStore() {
-      return useNotificationStore();
     }
   },
   methods: {
@@ -346,10 +342,7 @@ export default {
             // Ensure baseLayer exists before using it
             if (!this.$konvaStore.baseLayer) {
               console.error('Konva baseLayer not initialized. Cannot import vector documents.');
-              this.notificationStore.notify({
-                message: "Konva renderer not initialized. Please try again.",
-                type: "error",
-              });
+              this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
               return;
             }
 
@@ -398,10 +391,7 @@ export default {
 
         }catch(error){
           console.error("Error importing file:", error);
-          this.notificationStore.notify({
-            message: `Failed to import file: ${error.message}`,
-            type: "error",
-          });
+          this.showSnackbar(`Failed to import file: ${error.message}`, 'error');
         }
         
     },
