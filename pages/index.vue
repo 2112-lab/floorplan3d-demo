@@ -121,7 +121,7 @@
 <script>
 import KonvaRenderer from "~/components/konva-renderer/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue";
-import LayersPanel  from "~/components/documents-panel.vue";
+import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { useKonvaStore } from "~/store/konva-store";
 import { useEventBusStore } from "~/store/event-bus";
@@ -521,7 +521,7 @@ export default {
 }
 
 /* Override LayersPanel positioning when inside threejs container */
-#threejs-container .documents-container {
+#threejs-container .layers-container {
   position: static !important;
   top: auto !important;
   left: auto !important;

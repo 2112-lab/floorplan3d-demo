@@ -1,6 +1,6 @@
 <template>
-  <div class="documents-container">
-    <div class="documents-panel">      
+  <div class="layers-container">
+    <div class="layers-panel">      
       <div 
         class="d-flex justify-space-between align-center pb-1 pt-1 panel-header" 
         @click="togglePanel"
@@ -437,7 +437,7 @@ export default {
 </script>
 
 <style scoped>
-.documents-container {
+.layers-container {
   position: absolute;
   top: 75px;
   left: 250px;
@@ -450,7 +450,7 @@ export default {
   /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); */
 }
 
-.documents-panel {
+.layers-panel {
   background-color: #eee0;
   border-top: 1px solid #0002;
 }
