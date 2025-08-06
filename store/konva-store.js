@@ -425,38 +425,6 @@ export const useKonvaStore = defineStore("konvaStore", {
     },
     // ------- //
 
-    // Document management methods
-    toggleDocumentVisibility(documentId) {
-      if (!this.documents[documentId]) return;
-
-      const doc = this.documents[documentId];
-      const newOpacity = doc.docConfigs.layer.opacity.value > 0 ? 0 : 1;
-
-      if (doc.konva.layer) {
-        doc.konva.layer.opacity(newOpacity);
-        doc.docConfigs.layer.opacity.value = newOpacity;
-        doc.konva.layer.getParent().batchDraw();
-      }
-    },
-
-    toggleAllDocumentsVisibility(makeVisible) {
-      const newOpacity = makeVisible ? 1 : 0;
-
-      Object.keys(this.documents).forEach((docId) => {
-        console.log("toggleAllDocumentsVisibility docId:", docId);
-        const doc = this.documents[docId];
-        if (doc.konva.layer) {
-          doc.konva.layer.opacity(newOpacity);
-          doc.docConfigs.layer.opacity.value = newOpacity;
-          console.log(
-            "toggleAllDocumentsVisibility doc.docConfigs.layer.opacity.value:",
-            doc.docConfigs.layer.opacity.value
-          );
-          doc.konva.layer.batchDraw();
-        }
-      });
-    },
-
     moveDocumentUp(documentId) {
       const docEntries = Object.entries(this.documents).sort(
         ([, a], [, b]) => a.ui.order - b.ui.order

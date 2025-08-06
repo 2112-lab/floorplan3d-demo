@@ -6,14 +6,6 @@
         @click="togglePanel"
         style="cursor: pointer;"
       >
-        <v-icon 
-          size="x-small" 
-          class="mr-1" 
-          @click.stop="toggleAllDocumentsVisibility"
-          style="cursor: pointer;"
-        >
-          {{ !areAllDocumentsInvisible ? 'mdi-eye' : 'mdi-eye-off' }}
-        </v-icon>
         <span class="text-subtitle-2">Layers</span>
         <div class="d-flex align-center">
           
@@ -42,16 +34,7 @@
                 hide-details
                 class="mr-0 mt-0 mb-0 ml-0 compact-checkbox"
                 @click.stop="toggleDocumentSelected(doc.id)"
-              ></v-checkbox><v-icon 
-                color="black" 
-                size="x-small" 
-                class="mr-2"
-                @click.stop="toggleDocumentVisibility(doc.id)"
-                :disabled="doc.disabled"
-                style="cursor: pointer;"
-              >
-                {{ doc.docConfigs.layer.opacity.value > 0 ? 'mdi-eye' : 'mdi-eye-off' }}
-              </v-icon>
+              ></v-checkbox>
 
               <!-- 3D Toggle Icon -->
               <v-icon 
@@ -323,29 +306,6 @@ export default {
       
       // Set the document as active
       this.konvaStore.setDocumentActive(documentId);
-      
-      // If there's a Konva layer associated with this document, make sure it's visible
-      if (doc.konva.layer && doc.docConfigs.layer.opacity.value === 0) {
-        // Make it visible if it was hidden
-        this.konvaStore.toggleDocumentVisibility(documentId);
-      }
-    },
-    
-    toggleDocumentVisibility(documentId) {
-      console.log("toggleDocumentVisibility started");
-      console.log("toggleDocumentVisibility documentId:", documentId);
-      console.log("toggleDocumentVisibility this.konvaStore.documents:", JSON.parse(JSON.stringify(this.konvaStore.documents)) );
-      const doc = this.konvaStore.documents[documentId];
-      if (doc.disabled) return;
-      
-      // Toggle visibility using opacity
-      this.konvaStore.toggleDocumentVisibility(documentId);
-    },
-    
-    toggleAllDocumentsVisibility() {
-      console.log("toggleAllDocumentsVisibility this.areAllDocumentsInvisible:", this.areAllDocumentsInvisible);
-      // Toggle all documents' visibility
-      this.konvaStore.toggleAllDocumentsVisibility(this.areAllDocumentsInvisible);
     },
     
     moveDocumentUp(documentId) {
@@ -447,6 +407,7 @@ export default {
   border-radius: 4px;
   background-color: white;
   z-index: 1000;
+  padding:2px;
   /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); */
 }
 

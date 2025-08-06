@@ -275,11 +275,6 @@ export default {
       this.syncDocumentsFromStore();
     },
 
-    toggleDocumentVisibility(documentId) {
-      this.$konvaStore.toggleDocumentVisibility(documentId);
-      this.syncDocumentsFromStore();
-    },
-
     toggleDocumentSelected(documentId) {
       this.$konvaStore.toggleDocumentSelected(documentId);
       this.syncDocumentsFromStore();
