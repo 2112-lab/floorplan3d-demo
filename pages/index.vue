@@ -156,13 +156,8 @@ export default {
       threejsRenderer: null,
       currentFile: null, // Store the current file being processed
       showExtractionDialog: false,
-      extractionOptions: {
-        walls: true,
-        rooms: false,
-      },
       expandedSections: {
         sceneControls: true,
-        export: false,
       },
       snackbar: {
         show: false,
@@ -560,43 +555,6 @@ export default {
       return doc_id;
     },
 
-    async importFloorPlan() {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".jpg,.jpeg,.png";
-
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          try {
-            // Store the file for later use
-            this.editStore.setUploadedImage(file);
-
-            // Create URL for preview
-            const imageUrl = URL.createObjectURL(file);
-            // Update the v-img src
-            const imgElement = document.querySelector("#image-preview img");
-            if (imgElement) {
-              imgElement.src = imageUrl;
-            }
-
-            this.editStore.setOutputStage(0);
-            this.notificationStore.notify({
-              message: "Succesfully imported",
-            });
-          } catch (error) {
-            console.error("Error importing floor plan:", error);
-            this.notificationStore.notify({
-              message: "Failed to import floor plan",
-              type: "error",
-            });
-          }
-        }
-      };
-      input.value = "";
-      input.click();
-    },
-
     // Mock methods for the new Tools panel
     resetScene() {
       if(Object.keys(this.$konvaStore.documents).length === 0) {
@@ -621,18 +579,6 @@ export default {
       this.$eventBus.emit('resetKonva');
       
       this.showSnackbar('Scene reset successfully', 'success');
-    },
-
-    centerView() {
-      if (this.threejsRenderer) {
-        // Add your center view logic here
-        this.showSnackbar('View centered', 'info');
-      }
-    },
-
-    exportScene() {
-      // Add your export logic here
-      this.showSnackbar('Scene exported successfully', 'success');
     },
 
     showSnackbar(text, color = 'success') {
