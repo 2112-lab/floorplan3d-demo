@@ -263,6 +263,16 @@ export default {
 
           // Process vector documents first (rooms and walls)
           for (let doc of sortedVectorDocs) {
+            // Ensure baseLayer exists before using it
+            if (!this.$konvaStore.baseLayer) {
+              console.error('Konva baseLayer not initialized. Cannot import vector documents.');
+              this.notificationStore.notify({
+                message: "Konva renderer not initialized. Please try again.",
+                type: "error",
+              });
+              return;
+            }
+
             const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
             this.$konvaStore.baseLayer.add(layerKonva);
             layersToCenter.push(layerKonva);

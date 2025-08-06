@@ -3,8 +3,8 @@ import { defineStore } from "pinia";
 export const useEditStore = defineStore("edit", {
   state: () => ({
     viewport: {
-      primary: "konva",
-      secondary: "three",
+      primary: "three",
+      secondary: "konva",
     },
     viewPortSize: {
       standard: 30,

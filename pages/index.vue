@@ -6,16 +6,30 @@
 
     <LayersPanel />
 
-    <ThreejsRenderer ref="threejsRenderer" />
+    <!-- Hidden konva renderer for dependencies -->
+    <div style="display: none">
+      <KonvaRenderer ref="konvaRenderer" />
+      <div ref="hiddenContainer"></div>
+    </div>
 
-    <!-- Secondary Viewport -->
-    <SlidingViewPort :size="editStore.viewPortSize.standard" class="mt-2">
-      <template #title> Renderer </template>
-      <template #default="{ size }">
-        <div ref="secondaryContainer" class="renderer-container"></div>
-      </template>
+    <!-- Main ThreeJS Container -->
+    <main class="main threejs-main">
+      <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
+    </main>
+
+    <!-- Console Viewport -->
+    <SlidingViewPort
+      :top="`calc(100vh - 200px)`"
+      type="console"
+      custom-classes="console"
+      :size="editStore.viewPortSize.console"
+      id="consoleViewport"
+    >
+      <template #title> Console </template>
+
+      <Exports v-if="$consoleStore.mode === 'svg'" />
+      <AiConsole v-if="$consoleStore.mode === 'ai'" />
     </SlidingViewPort>
-
   </div>
 </template>
 
@@ -46,43 +60,30 @@ export default {
       editStore: useEditStore(),
       konvaRenderer: null,
       threejsRenderer: null,
-      primaryContainer: null,
-      secondaryContainer: null,
     };
   },
   mounted() {
-    // Store references to renderers and containers
+    // Store references to renderers
     this.konvaRenderer = this.$refs.konvaRenderer;
     this.threejsRenderer = this.$refs.threejsRenderer;
-    this.primaryContainer = this.$refs.primaryContainer;
-    this.secondaryContainer = this.$refs.secondaryContainer;
 
-    // Initial renderer placement
+    // Initialize both renderers
     this.$nextTick(() => {
-      this.moveRenderer(this.editStore.viewport.primary, this.primaryContainer);
-      this.moveRenderer(
-        this.editStore.viewport.secondary,
-        this.secondaryContainer
-      );
+      // Initialize Konva renderer even though it's hidden (needed for dependencies)
+      if (this.konvaRenderer) {
+        this.konvaRenderer.initKonvaIfNeeded();
+      }
+      
+      // Initialize threejs renderer
+      if (this.threejsRenderer) {
+        this.threejsRenderer.resizeThreeJs();
+      }
     });
 
     const config = useRuntimeConfig();
     if (config.public.developmentMode === 'none') {
       console.log('Running in local development mode');
     }
-    
-  },
-  computed: {
-    getPrimaryComponent() {
-      return this.editStore.viewport.primary === "konva"
-        ? "KonvaRenderer"
-        : "ThreejsRenderer";
-    },
-    getSecondaryComponent() {
-      return this.editStore.viewport.secondary === "konva"
-        ? "KonvaRenderer"
-        : "ThreejsRenderer";
-    },
   },
   methods: {
     async importFloorPlan() {
@@ -121,63 +122,6 @@ export default {
       input.value = "";
       input.click();
     },
-    moveRenderer(type, targetContainer) {
-      if (!targetContainer) return;
-
-      let sourceEl = null;
-      let otherEl = null;
-
-      if (type === "konva") {
-        sourceEl = this.konvaRenderer?.$el;
-        otherEl = this.threejsRenderer?.$el;
-      } else if (type === "three") {
-        sourceEl = this.threejsRenderer?.$el;
-        otherEl = this.konvaRenderer?.$el;
-      }
-
-      if (!sourceEl) return;
-
-      // Store the current content of target container if any
-      const currentContent = targetContainer.firstChild;
-      if (currentContent) {
-        // Move current content back to hidden container
-        const hiddenContainer = this.$refs.hiddenContainer;
-        if (hiddenContainer && currentContent.parentNode === targetContainer) {
-          hiddenContainer.appendChild(currentContent);
-        }
-      }
-
-      // Move the new renderer to target container
-      if (sourceEl.parentNode !== targetContainer) {
-        targetContainer.appendChild(sourceEl);
-      }
-
-      // Trigger resize events after DOM update
-      this.$nextTick(() => {
-        if (this.konvaRenderer) {
-          this.konvaRenderer.resizeKonva();
-        }
-        if (this.threejsRenderer) {
-          this.threejsRenderer.resizeThreeJs();
-        }
-      });
-    },
-  },
-  watch: {
-    "editStore.viewport.primary": {
-      handler(newType) {
-        this.$nextTick(() => {
-          this.moveRenderer(newType, this.primaryContainer);
-        });
-      },
-    },
-    "editStore.viewport.secondary": {
-      handler(newType) {
-        this.$nextTick(() => {
-          this.moveRenderer(newType, this.secondaryContainer);
-        });
-      },
-    },
   },
 };
 </script>
@@ -188,8 +132,23 @@ main.main {
   margin-left: 240px;
   padding-top: 64px;
 }
-main.main > div {
+
+main.threejs-main {
+  width: calc(100vw - 240px);
+  position: relative;
+  overflow: hidden;
+}
+
+main.threejs-main > div {
   height: 100%;
+  width: 100%;
+}
+
+.threejs-primary {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #f5f5f5;
 }
 
 .renderer-container {

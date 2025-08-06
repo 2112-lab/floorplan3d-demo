@@ -387,15 +387,20 @@ export default {
       const container = this.$refs["konva-container"];
       if (!container) return;
 
+      // Check if container is hidden, and if so, use minimum dimensions
+      const isHidden = getComputedStyle(container.parentElement).display === 'none';
+      const width = isHidden ? 100 : container.clientWidth;
+      const height = isHidden ? 100 : container.clientHeight;
+
       if (
         !this.stage &&
-        container.clientWidth > 0 &&
-        container.clientHeight > 0
+        width > 0 &&
+        height > 0
       ) {
         this.stage = initializeStage(
           container,
-          container.clientWidth,
-          container.clientHeight
+          width,
+          height
         );
         this.konvaStore.setStage(this.stage);
         const baseLayer = new Konva.Layer({ name: "baseLayer" });
