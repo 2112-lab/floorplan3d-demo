@@ -1,8 +1,6 @@
 <template>  
   <!-- Main application container with light background -->
   <v-app id="appContainer" style="background-color:#f5f5f5;">     
-    <LayersPanel />
-
     <!-- Hidden konva renderer for dependencies -->
     <div style="display: none">
       <KonvaRenderer ref="konvaRenderer" />
@@ -18,6 +16,13 @@
       >
         <!-- ThreeJS Renderer -->
         <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
+        
+        <!-- LayersPanel positioned in corner with padding -->
+        <div style="position: absolute; top: 10px; left: 10px; z-index: 50; width: 280px;">
+          <div style="position: relative; background-color: white; border: 1px solid #aaa; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
+            <LayersPanel />
+          </div>
+        </div>
       </div>   
     </div>    
 
@@ -682,5 +687,16 @@ export default {
 
 .card-description {
   line-height: 1.4;
+}
+
+/* Override LayersPanel positioning when inside threejs container */
+#threejs-container .documents-container {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
 </style>
