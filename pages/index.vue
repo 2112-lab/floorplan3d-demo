@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import KonvaRenderer from "~/components/konva-renderer/konva-renderer.vue";
+import KonvaRenderer from "~/components/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
