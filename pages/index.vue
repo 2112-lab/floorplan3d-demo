@@ -116,26 +116,19 @@
 </template>
 
 <script>
-import LeftPanel from "../components/left-panel/left-panel.vue";
-import StatusBar from "../components/status-bar/status-bar.vue";
-import SlidingViewPort from "../components/sliding-viewport/sliding-viewport.vue";
 import KonvaRenderer from "~/components/konva-renderer/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue";
 import { useEditStore } from "~/store/edit";
-import Exports from "~/components/exports.vue";
-import AiConsole  from "~/components/ai-console/ai-console.vue";
 import LayersPanel  from "~/components/documents-panel.vue";
 import { addRasterImageToLayer, renderSvgInKonva, svgToKonvaObjects } from "~/lib/konva/konva";
 import { useNotificationStore } from "~/store/notification";
 import { useThreeStore } from "~/store/three-store";
 import { useConsoleStore } from "~/store/console-store";
-import { centerLayer, centerLayersAsGroup } from "~/lib/konva/center-layer";
+import { centerLayersAsGroup } from "~/lib/konva/center-layer";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
-import { formatSVG } from "~/lib/svg";
 import Konva from "konva";
 import Floorplan3D from "~/lib/Floorplan3D";
-import Floorplan3DImporter from "~/lib/Floorplan3DImporter";
 
 // Utility function for safe deep cloning
 const safeDeepClone = (obj) => {
@@ -149,12 +142,8 @@ const safeDeepClone = (obj) => {
 
 export default {
   components: {
-    LeftPanel,
-    StatusBar,
-    SlidingViewPort,
     KonvaRenderer,
     ThreejsRenderer,
-    AiConsole,
     LayersPanel
   },
   data() {
@@ -187,24 +176,6 @@ export default {
     // Store references to renderers
     this.konvaRenderer = this.$refs.konvaRenderer;
     this.threejsRenderer = this.$refs.threejsRenderer;
-
-    // Initialize both renderers
-    this.$nextTick(() => {
-      // Initialize Konva renderer even though it's hidden (needed for dependencies)
-      if (this.konvaRenderer) {
-        this.konvaRenderer.initKonvaIfNeeded();
-      }
-      
-      // Initialize threejs renderer
-      if (this.threejsRenderer) {
-        this.threejsRenderer.resizeThreeJs();
-      }
-    });
-
-    const config = useRuntimeConfig();
-    if (config.public.developmentMode === 'none') {
-      console.log('Running in local development mode');
-    }
   },
   methods: {
     async importFile() {
