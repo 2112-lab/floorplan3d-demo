@@ -435,6 +435,20 @@ export default {
               }
             });
           }   
+
+          setTimeout(() => {
+            // Sequentially set each vector document as active, to trigger renderSvgToScene
+            for(let docKey in this.documents) {
+              let doc = this.documents[docKey];
+              if(doc.metadata.category === "vector") {
+                setTimeout(() => {
+                  this.setDocumentActive(doc.id);
+                }, 5)
+              }
+            }          
+          }, 100);
+
+          this.showSnackbar('SVG file imported successfully', 'success');
         }        
 
         }catch(error){
