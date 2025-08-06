@@ -273,10 +273,6 @@ export default {
           // Add the new layer and order properties with clean references
           this.$konvaStore.addDocument(doc.id, doc.name, {
             ...docCopy,
-            konva: {
-              ...docCopy.konva,
-              layer: layerKonva
-            },
             ui: {
               ...docCopy.ui,
               order: order
@@ -311,14 +307,6 @@ export default {
         let importedData;
         
         importedData = await importer.importFile();
-        
-        // Create a proper copy of the file object to avoid shared references
-        if (importedData.file) {
-          importedData.file = new File([importedData.file], importedData.file.name, { 
-            type: importedData.file.type,
-            lastModified: importedData.file.lastModified
-          });
-        }
         
         // handle svg upload
         if(importedData.type === "svg"){
@@ -363,29 +351,13 @@ export default {
             // Add the new layer and order properties with clean references
             this.$konvaStore.addDocument(doc.id, doc.name, {
               ...docCopy,
-              konva: {
-                ...docCopy.konva,
-                layer: layerKonva
-              },
               ui: {
                 ...docCopy.ui,
                 order: order
               }
             });
 
-          } 
-
-          setTimeout(() => {
-            // Sequentially set each vector document as active, to trigger renderSvgToScene
-            for(let docKey in this.$konvaStore.documents) {
-              let doc = this.$konvaStore.documents[docKey];
-              if(doc.metadata.category === "vector") {
-                setTimeout(() => {
-                  this.$konvaStore.setDocumentActive(doc.id);
-                }, 5)
-              }
-            }          
-          }, 100);    
+          }   
 
         }        
 
@@ -394,23 +366,6 @@ export default {
           this.showSnackbar(`Failed to import file: ${error.message}`, 'error');
         }
         
-    },
-
-    extractViewBox(svgContent) {
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-
-      const svgElement = svgDoc.querySelector('svg');
-      let viewBox = svgElement.getAttribute('viewBox');
-
-      viewBox = viewBox.split(' ');
-
-      viewBox = {
-        width: viewBox[2],
-        height: viewBox[3]
-      }
-
-      return viewBox;
     },
 
     // Mock methods for the new Tools panel
