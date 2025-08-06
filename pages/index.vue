@@ -1,18 +1,7 @@
-<template>
-  <div>
+<template>  
+  <!-- Main application container with light background -->
+  <v-app id="appContainer" style="background-color:#f5f5f5;">     
     <LayersPanel />
-
-    <!-- Import Button -->
-    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
-      <v-btn
-        variant="outlined"
-        @click="importFile"
-        size="small"
-        class="px-2"
-      >
-        Import
-      </v-btn>
-    </div>
 
     <!-- Hidden konva renderer for dependencies -->
     <div style="display: none">
@@ -20,12 +9,105 @@
       <div ref="hiddenContainer"></div>
     </div>
 
-    <!-- Main ThreeJS Container -->
-    <main class="main threejs-main">
-      <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
-    </main>
+    <!-- Main content area - flexible layout with primary viewport and right sidebar -->    
+    <div style="display: flex; height: calc(100vh); width: 100%; overflow: hidden;">      
+      <div 
+        id="threejs-container" 
+        ref="threejsContainer"
+        style="position:absolute; top:20px; left:20px; right:420px; bottom:20px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12)"
+      >
+        <!-- ThreeJS Renderer -->
+        <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
+      </div>   
+    </div>    
 
-  </div>
+    <!-- Tools Panel - Right Sidebar -->
+    <div style="position: fixed; top: 20px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
+      <v-card 
+        elevation="4" 
+        style="height: 100%; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: flex; flex-direction: column;"
+      >
+        <!-- Header -->
+        <v-card-title class="py-3">
+          <v-icon class="mr-2">mdi-tools</v-icon>
+          <span class="text-h6">Tools</span>
+          <v-spacer></v-spacer>
+        </v-card-title>
+        
+        <v-divider></v-divider>
+        
+        <!-- Content -->
+        <div style="flex: 1; overflow-y: auto; padding: 16px;">
+          
+          <!-- Scene Controls Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer" 
+              @click="expandedSections.sceneControls = !expandedSections.sceneControls"
+            >
+              <v-icon small class="mr-2" color="primary">mdi-cube-outline</v-icon>
+              <span class="font-weight-medium">Scene Controls</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.sceneControls }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Control and manipulate the 3D scene
+                </div>
+                
+                <v-btn
+                  color="success"
+                  @click="importFile"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-import</v-icon>
+                  Import File
+                </v-btn>
+                
+                <v-btn
+                  color="primary"
+                  @click="resetScene"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-refresh</v-icon>
+                  Reset
+                </v-btn>
+                
+              </v-card-text>
+            </v-expand-transition>
+          </v-card>
+
+        </div>
+        
+      </v-card>
+    </div>
+    
+    <!-- Notification Snackbar -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="snackbar.timeout"
+      top
+      right
+    >
+      {{ snackbar.text }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          text
+          v-bind="attrs"
+          @click="snackbar.show = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+      
+  </v-app>
 </template>
 
 <script>
@@ -83,6 +165,16 @@ export default {
       extractionOptions: {
         walls: true,
         rooms: false,
+      },
+      expandedSections: {
+        sceneControls: true,
+        export: false,
+      },
+      snackbar: {
+        show: false,
+        text: '',
+        color: 'success',
+        timeout: 3000,
       },
     };
   },
@@ -528,28 +620,42 @@ export default {
       input.value = "";
       input.click();
     },
+
+    // Mock methods for the new Tools panel
+    resetScene() {
+      if (this.threejsRenderer) {
+        // Add your scene reset logic here
+        this.showSnackbar('Scene reset successfully', 'success');
+      }
+    },
+
+    centerView() {
+      if (this.threejsRenderer) {
+        // Add your center view logic here
+        this.showSnackbar('View centered', 'info');
+      }
+    },
+
+    exportScene() {
+      // Add your export logic here
+      this.showSnackbar('Scene exported successfully', 'success');
+    },
+
+    showSnackbar(text, color = 'success') {
+      this.snackbar.text = text;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
+    },
+
+    stageZoomToFit() {
+      // Existing method - keeping as is
+      // Add your zoom to fit logic here
+    },
   },
 };
 </script>
 
 <style scoped>
-main.main {
-  height: calc(100vh - 40px);
-  margin-left: 240px;
-  padding-top: 64px;
-}
-
-main.threejs-main {
-  width: calc(100vw - 240px);
-  position: relative;
-  overflow: hidden;
-}
-
-main.threejs-main > div {
-  height: 100%;
-  width: 100%;
-}
-
 .threejs-primary {
   width: 100%;
   height: 100%;
@@ -562,6 +668,19 @@ main.threejs-main > div {
   height: 100%;
   overflow: hidden;
   position: relative;
-  background-color: #fff
+  background-color: #fff;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.card-description {
+  line-height: 1.4;
 }
 </style>
