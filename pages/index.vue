@@ -118,12 +118,8 @@
 <script>
 import KonvaRenderer from "~/components/konva-renderer/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue";
-import { useEditStore } from "~/store/edit";
 import LayersPanel  from "~/components/documents-panel.vue";
-import { renderSvgInKonva, svgToKonvaObjects } from "~/lib/konva/konva";
-import { useNotificationStore } from "~/store/notification";
 import { useThreeStore } from "~/store/three-store";
-import { useConsoleStore } from "~/store/console-store";
 import { centerLayersAsGroup } from "~/lib/konva/center-layer";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
@@ -148,10 +144,7 @@ export default {
   },
   data() {
     return {
-      editStore: useEditStore(),
-      notificationStore: useNotificationStore(),
       threestore: useThreeStore(),
-      consoleStore: useConsoleStore(),
       konvaRenderer: null,
       threejsRenderer: null,
       expandedSections: {
@@ -243,10 +236,6 @@ export default {
               }
             });
 
-            // Use svgPath directly without unnecessary deep cloning
-            const {objects} = svgToKonvaObjects(doc.svgPath, doc.id);
-            this.$konvaStore.setKonvaObjects(doc.id, objects);
-            renderSvgInKonva(layerKonva, objects, this.$konvaStore.baseLayer);
           } 
 
           setTimeout(() => {
@@ -307,12 +296,6 @@ export default {
         const contentGroup = this.threestore.scene.getObjectByName("contentGroup");
         this.threestore.floorplan3d.clearScene(contentGroup);
       }
-
-      // Reset output stage to 1 (walls view)
-      // this.editStore.setOutputStage(1);
-
-      // Clear console output
-      this.consoleStore.setConsoleOutput("");
 
       this.$konvaStore.documents = [];
 
