@@ -125,6 +125,7 @@ import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
 import Floorplan3D from "~/lib/Floorplan3D";
+import SvgDocumentParser from "~/lib/svg-document-parser";
 
 // Utility function for safe deep cloning
 const safeDeepClone = (obj) => {
@@ -231,22 +232,15 @@ export default {
         // Import the SVG content
         const importedData = await importer.importSvg(svgContent);
         
-        // Process the imported data similar to the existing importFile method
+        // Process the imported data using the new document parser utility
         let layersToCenter = [];
         
-        // Create a deep copy of vector documents and sort them
-        const vectorDocsCopy = safeDeepClone(importedData.vectorDocuments);
-        const sortedVectorDocs = vectorDocsCopy.sort((a, b) => {
-          // Rooms should come first
-          if (a.name.toLowerCase().includes('room') && !b.name.toLowerCase().includes('room')) return -1;
-          if (!a.name.toLowerCase().includes('room') && b.name.toLowerCase().includes('room')) return 1;
-          // Walls should come second
-          if (a.name.toLowerCase().includes('wall') && !b.name.toLowerCase().includes('wall')) return -1;
-          if (!a.name.toLowerCase().includes('wall') && b.name.toLowerCase().includes('wall')) return 1;
-          return 0;
-        });
+        // Sort and assign orders to vector documents using the parser utility
+        const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
+          SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
+        );
 
-        // Process vector documents first (rooms and walls)
+        // Process vector documents (rooms and walls)
         for (let doc of sortedVectorDocs) {
           // Ensure baseLayer exists before using it
           if (!this.$konvaStore.baseLayer) {
@@ -259,23 +253,15 @@ export default {
           this.$konvaStore.baseLayer.add(layerKonva);
           layersToCenter.push(layerKonva);
           
-          // Assign order based on document type
-          let order = 2; // Default order
-          if (doc.name.toLowerCase().includes('room')) {
-            order = 1; // Rooms get lowest order (appear first)
-          } else if (doc.name.toLowerCase().includes('wall')) {
-            order = 2; // Walls get middle order
-          }
-          
           // Create a proper deep copy with independent properties            
           const docCopy = safeDeepClone(doc);
           
-          // Add the new layer and order properties with clean references
+          // Add the document to the store with the processed order
           this.$konvaStore.addDocument(doc.id, doc.name, {
             ...docCopy,
             ui: {
               ...docCopy.ui,
-              order: order
+              order: doc.ui.order // Use the order assigned by the parser
             }
           });
         } 
@@ -313,19 +299,12 @@ export default {
           const svgContent = await importedData.file.text();
          
           let layersToCenter = [];            
-          // Create a deep copy of vector documents and sort them
-          const vectorDocsCopy = safeDeepClone(importedData.vectorDocuments);
-          const sortedVectorDocs = vectorDocsCopy.sort((a, b) => {
-            // Rooms should come first
-            if (a.name.toLowerCase().includes('room') && !b.name.toLowerCase().includes('room')) return -1;
-            if (!a.name.toLowerCase().includes('room') && b.name.toLowerCase().includes('room')) return 1;
-            // Walls should come second
-            if (a.name.toLowerCase().includes('wall') && !b.name.toLowerCase().includes('wall')) return -1;
-            if (!a.name.toLowerCase().includes('wall') && b.name.toLowerCase().includes('wall')) return 1;
-            return 0;
-          });
+          // Sort and assign orders to vector documents using the parser utility
+          const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
+            SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
+          );
 
-          // Process vector documents first (rooms and walls)
+          // Process vector documents (rooms and walls)
           for (let doc of sortedVectorDocs) {
             // Ensure baseLayer exists before using it
             if (!this.$konvaStore.baseLayer) {
@@ -338,27 +317,18 @@ export default {
             this.$konvaStore.baseLayer.add(layerKonva);
             layersToCenter.push(layerKonva);
             
-            // Assign order based on document type
-            let order = 2; // Default order
-            if (doc.name.toLowerCase().includes('room')) {
-              order = 1; // Rooms get lowest order (appear first)
-            } else if (doc.name.toLowerCase().includes('wall')) {
-              order = 2; // Walls get middle order
-            }
             // Create a proper deep copy with independent properties            
             const docCopy = safeDeepClone(doc);
             
-            // Add the new layer and order properties with clean references
+            // Add the document to the store with the processed order
             this.$konvaStore.addDocument(doc.id, doc.name, {
               ...docCopy,
               ui: {
                 ...docCopy.ui,
-                order: order
+                order: doc.ui.order // Use the order assigned by the parser
               }
             });
-
           }   
-
         }        
 
         }catch(error){
