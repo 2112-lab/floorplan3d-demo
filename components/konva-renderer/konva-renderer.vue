@@ -19,7 +19,6 @@ import Konva from "konva";
 import {
   initializeStage,
 } from "~/lib/konva/konva";
-import {renderGrid, hideGrid} from "~/lib/konva/grid"
 import { toSvg } from "~/lib/svg";;
 
 import { useEditStore } from "~/store/edit";
@@ -93,9 +92,6 @@ export default {
       if (!activeDocument.docConfigs || !activeDocument.docConfigs.svg || !activeDocument.docConfigs.svg.mode) return "path";
       return activeDocument.docConfigs.svg.mode.value;
     },
-    gridEnabled2d(){
-      return this.editStore.checkboxes.find(x => x.name === "2dgrid").value;
-    },
   },
   watch: {
     konvaObjects: {
@@ -121,36 +117,6 @@ export default {
         
       },
       deep: true,
-    },
-    "gridEnabled2d": {
-      handler(enabled) {
-        if(enabled){
-          console.log("gridEnabled2d", enabled)
-          console.log(this.$konvaStore.gridLayer)
-          if(!this.$konvaStore.gridLayer) return;
-          renderGrid(this.$konvaStore.gridLayer);
-        }else{
-          if(!this.$konvaStore.gridLayer) return;
-          hideGrid(this.$konvaStore.gridLayer);
-        }
-      },
-      immediate: true,
-    },
-    isVisible: {
-      handler(visible) {
-        if (visible) {
-          this.$nextTick(() => {
-            // Re-initialize Konva if needed
-            this.initKonvaIfNeeded();
-            // Re-render grid if enabled
-            const { value } = this.editStore.checkboxes.find(x => x.name === "2dgrid");
-            if (value && this.konvaStore.gridLayer) {
-              renderGrid(this.konvaStore.gridLayer);
-            }
-          });
-        }
-      },
-      immediate: true
     },
   },
   methods: {    

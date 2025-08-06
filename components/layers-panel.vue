@@ -86,7 +86,8 @@
                 offset="5"
                 @close="handleMenuClose(doc.id)"
               >
-                <template v-slot:activator="{ props }">                  <v-btn 
+                <template v-slot:activator="{ props }">                  
+                  <v-btn 
                     icon="mdi-dots-vertical" 
                     variant="text" 
                     size="x-small" 
