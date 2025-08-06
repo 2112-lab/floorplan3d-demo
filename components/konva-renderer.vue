@@ -16,10 +16,7 @@
 
 <script>
 import Konva from "konva";
-import {
-  initializeStage,
-} from "~/lib/konva/konva";
-import { toSvg } from "~/lib/svg";;
+import { toSvg } from "~/lib/svg";
 
 import { useEditStore } from "~/store/edit";
 import { useKonvaStore } from "~/store/konva-store";
@@ -149,6 +146,17 @@ export default {
       //   type: "success",
       // });
     },
+
+    initializeStage(containerRef, width, height) {
+      const stage = new Konva.Stage({
+        container: containerRef,
+        width: width,
+        height: height,
+        draggable: false,
+      });
+
+      return stage;
+    },
     
     initKonvaIfNeeded() {
       const container = this.$refs["konva-container"];
@@ -164,7 +172,7 @@ export default {
         width > 0 &&
         height > 0
       ) {
-        this.stage = initializeStage(
+        this.stage = this.initializeStage(
           container,
           width,
           height
