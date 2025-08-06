@@ -47,7 +47,7 @@
           <!-- Scene Controls Section -->
           <v-card outlined class="mb-4">
             <v-card-subtitle 
-              class="d-flex align-center cursor-pointer" 
+              class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.sceneControls = !expandedSections.sceneControls"
             >
               <v-icon small class="mr-2" color="primary">mdi-cube-outline</v-icon>
@@ -57,8 +57,11 @@
                 mdi-chevron-down
               </v-icon>
             </v-card-subtitle>
-            <v-expand-transition>
-              <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
+            <div 
+              class="expandable-content"
+              :class="{ 'expanded': expandedSections.sceneControls }"
+            >
+              <v-card-text class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
                   Control and manipulate the 3D scene
                 </div>
@@ -84,7 +87,7 @@
                 </v-btn>
                 
               </v-card-text>
-            </v-expand-transition>
+            </div>
           </v-card>
 
         </div>
@@ -526,5 +529,16 @@ export default {
   border: none !important;
   background-color: transparent !important;
   box-shadow: none !important;
+}
+
+/* Efficient expand/collapse animation */
+.expandable-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.expandable-content.expanded {
+  max-height: 300px; /* Adjust this value based on your content height */
 }
 </style>
