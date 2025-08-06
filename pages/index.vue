@@ -123,7 +123,6 @@ import { useThreeStore } from "~/store/three-store";
 import { useKonvaStore } from "~/store/konva-store";
 import { useEventBusStore } from "~/store/event-bus";
 import { useNotificationStore } from "~/store/notification";
-import { centerLayersAsGroup } from "~/lib/konva/center-layer";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
 import Floorplan3D from "~/lib/Floorplan3D";
@@ -300,12 +299,6 @@ export default {
             }
           }          
         }, 100);
-
-        if (layersToCenter.length > 0) {
-          const viewBox = this.extractViewBox(svgContent);
-          centerLayersAsGroup(layersToCenter, viewBox);
-          this.stageZoomToFit();
-        }
         
         this.showSnackbar('FP3D-00-07.svg imported successfully', 'success');
         
@@ -399,13 +392,7 @@ export default {
                 }, 5)
               }
             }          
-          }, 100);
-
-          if (layersToCenter.length > 0) {
-            const viewBox = this.extractViewBox(svgContent);
-            centerLayersAsGroup(layersToCenter, viewBox);
-            this.stageZoomToFit();
-          }      
+          }, 100);    
 
         }        
 
