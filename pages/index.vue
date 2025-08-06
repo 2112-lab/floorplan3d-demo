@@ -120,6 +120,9 @@ import KonvaRenderer from "~/components/konva-renderer/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue";
 import LayersPanel  from "~/components/documents-panel.vue";
 import { useThreeStore } from "~/store/three-store";
+import { useKonvaStore } from "~/store/konva-store";
+import { useEventBusStore } from "~/store/event-bus";
+import { useNotificationStore } from "~/store/notification";
 import { centerLayersAsGroup } from "~/lib/konva/center-layer";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
@@ -161,8 +164,157 @@ export default {
     // Store references to renderers
     this.konvaRenderer = this.$refs.konvaRenderer;
     this.threejsRenderer = this.$refs.threejsRenderer;
+    
+    // Auto-import the FP3D-00-07.svg file on page load with a small delay
+    // to ensure all components are properly initialized
+    setTimeout(() => {
+      this.autoImportSvg();
+    }, 500);
+  },
+  computed: {
+    $konvaStore() {
+      return useKonvaStore();
+    },
+    $eventBus() {
+      return useEventBusStore();
+    },
+    notificationStore() {
+      return useNotificationStore();
+    }
   },
   methods: {
+    stageZoomToFit() {
+      // Simple zoom to fit implementation
+      if (this.konvaRenderer && this.konvaRenderer.stage) {
+        const stage = this.konvaRenderer.stage;
+        const baseLayer = this.$konvaStore.baseLayer;
+        
+        if (baseLayer && baseLayer.children.length > 0) {
+          // Get the bounding box of all content
+          const box = baseLayer.getClientRect();
+          
+          if (box.width > 0 && box.height > 0) {
+            // Calculate the scale to fit content within stage
+            const stageWidth = stage.width();
+            const stageHeight = stage.height();
+            
+            const scaleX = stageWidth / box.width;
+            const scaleY = stageHeight / box.height;
+            const scale = Math.min(scaleX, scaleY) * 0.8; // 0.8 to leave some margin
+            
+            // Set the scale
+            stage.scale({ x: scale, y: scale });
+            
+            // Center the content
+            const centerX = (stageWidth - box.width * scale) / 2;
+            const centerY = (stageHeight - box.height * scale) / 2;
+            
+            stage.position({
+              x: centerX - box.x * scale,
+              y: centerY - box.y * scale,
+            });
+            
+            stage.batchDraw();
+          }
+        }
+      }
+    },
+
+    async autoImportSvg() {
+      try {
+        // Fetch the SVG file from the public directory
+        const response = await fetch('/floorplan-import-samples/FP3D-00-07.svg');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch SVG file: ${response.status}`);
+        }
+        
+        const svgContent = await response.text();
+        
+        // Create importer instance
+        const importer = new Floorplan3D(null, null, null);
+        
+        // Import the SVG content
+        const importedData = await importer.importSvg(svgContent);
+        
+        // Process the imported data similar to the existing importFile method
+        let layersToCenter = [];
+        
+        // Create a deep copy of vector documents and sort them
+        const vectorDocsCopy = safeDeepClone(importedData.vectorDocuments);
+        const sortedVectorDocs = vectorDocsCopy.sort((a, b) => {
+          // Rooms should come first
+          if (a.name.toLowerCase().includes('room') && !b.name.toLowerCase().includes('room')) return -1;
+          if (!a.name.toLowerCase().includes('room') && b.name.toLowerCase().includes('room')) return 1;
+          // Walls should come second
+          if (a.name.toLowerCase().includes('wall') && !b.name.toLowerCase().includes('wall')) return -1;
+          if (!a.name.toLowerCase().includes('wall') && b.name.toLowerCase().includes('wall')) return 1;
+          return 0;
+        });
+
+        // Process vector documents first (rooms and walls)
+        for (let doc of sortedVectorDocs) {
+          // Ensure baseLayer exists before using it
+          if (!this.$konvaStore.baseLayer) {
+            console.error('Konva baseLayer not initialized. Cannot import vector documents.');
+            this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
+            return;
+          }
+
+          const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
+          this.$konvaStore.baseLayer.add(layerKonva);
+          layersToCenter.push(layerKonva);
+          
+          // Assign order based on document type
+          let order = 2; // Default order
+          if (doc.name.toLowerCase().includes('room')) {
+            order = 1; // Rooms get lowest order (appear first)
+          } else if (doc.name.toLowerCase().includes('wall')) {
+            order = 2; // Walls get middle order
+          }
+          
+          // Create a proper deep copy with independent properties            
+          const docCopy = safeDeepClone(doc);
+          
+          // Add the new layer and order properties with clean references
+          this.$konvaStore.addDocument(doc.id, doc.name, {
+            ...docCopy,
+            konva: {
+              ...docCopy.konva,
+              layer: layerKonva
+            },
+            ui: {
+              ...docCopy.ui,
+              order: order
+            }
+          });
+        } 
+
+        setTimeout(() => {
+          // Sequentially set each vector document as active, to trigger renderSvgToScene
+          for(let docKey in this.$konvaStore.documents) {
+            let doc = this.$konvaStore.documents[docKey];
+            if(doc.metadata.category === "vector") {
+              setTimeout(() => {
+                this.$konvaStore.setDocumentActive(doc.id);
+              }, 5)
+            }
+          }          
+        }, 100);
+
+        if (layersToCenter.length > 0) {
+          const viewBox = this.extractViewBox(svgContent);
+          centerLayersAsGroup(layersToCenter, viewBox);
+          this.stageZoomToFit();
+        }
+        
+        this.showSnackbar('FP3D-00-07.svg imported successfully', 'success');
+        
+      } catch (error) {
+        console.error("Error auto-importing SVG file:", error);
+        this.showSnackbar(`Failed to auto-import SVG: ${error.message}`, 'error');
+      }
+    },
+
     async importFile() {
       try {
         const importer = new Floorplan3D(null, null, null);
