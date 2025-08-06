@@ -121,7 +121,6 @@ import ThreejsRenderer from "~/components/threejs-renderer/threejs-renderer.vue"
 import LayersPanel  from "~/components/documents-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { centerLayersAsGroup } from "~/lib/konva/center-layer";
-import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
 import Floorplan3D from "~/lib/Floorplan3D";
@@ -309,16 +308,6 @@ export default {
       this.snackbar.text = text;
       this.snackbar.color = color;
       this.snackbar.show = true;
-    },
-
-    stageZoomToFit() {
-      // Existing method - keeping as is
-      // Add your zoom to fit logic here
-    },
-  },
-  computed: {
-    $eventBus() {
-      return useEventBusStore();
     },
   },
 };
