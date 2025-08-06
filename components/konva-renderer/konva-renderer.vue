@@ -19,8 +19,6 @@ import Konva from "konva";
 import {
   initializeStage,
 } from "~/lib/konva/konva";
-import {debounce,   getActiveLayer} from "~/lib/konva/utils"
-import {setupZoom, setupPanning} from "~/lib/konva/pan-zoom"
 import {renderGrid, hideGrid} from "~/lib/konva/grid"
 import { toSvg } from "~/lib/svg";;
 
@@ -59,71 +57,6 @@ export default {
     });
     this.resizeObserver.observe(this.$refs["konva-container"]);
 
-    // Add keydown event listener
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        const layer = getActiveLayer();
-        if (!layer) return;
-        const doc = this.konvaStore.getActiveDocument();
-        if (!doc) return;
-
-        // First, find and remove any line groups created by double-click
-        const lineGroups = layer.find("Group").filter(group => 
-          group.attrs.type === "polyline-lines-group");
-        lineGroups.forEach(lineGroup => {
-          lineGroup.destroy();
-        });
-
-        // Then restore all polyline groups to their original state
-        const polylineGroups = layer.find("Group").filter(group => 
-          group.attrs.type === "polyline-group");
-        polylineGroups.forEach(polylineGroup => {
-          // Reset the group properties
-          polylineGroup.attrs.selected = false;
-          
-          // Get the actual polyline (first child of the group)
-          const polyline = polylineGroup.children.find(child => 
-            child instanceof Konva.Line);
-          
-          if (polyline) {
-            // Reset polyline properties
-            polyline.setAttrs({
-              opacity: 1,
-              mode: null,
-              selected: false
-            });
-            polyline.listening(true);
-            
-            // Reset fill/stroke
-            if (polyline.attrs.closed) {
-              polyline.fill(polyline.attrs.originalFill || "#000000");
-            } else {
-              polyline.stroke("#000000");
-            }
-          }
-          
-          // Hide all handles
-          polylineGroup.find("Circle").forEach(handle => {
-            handle.destroy();
-          });
-        });
-
-        // Clean up any single line groups
-        const singleLineGroups = layer.find("Group").filter(group => 
-          group.attrs.type === "polyline-single-line-group");
-        singleLineGroups.forEach(group => {
-          group.destroy();
-        });
-
-        // Update the store
-        this.konvaStore.deSelectAllObjects(doc.id);
-        
-        // Redraw the layer
-        const baseLayer = layer.getParent();
-        baseLayer.batchDraw();
-      }
-      
-    });
   },
   beforeDestroy() {
     if (this.resizeObserver) {
@@ -220,13 +153,7 @@ export default {
       immediate: true
     },
   },
-  methods: {
-    // Added debounced grid rendering to prevent excessive redraws
-    debouncedRenderGrid: debounce(function(gridLayer) {
-      if (!gridLayer) return;
-      renderGrid(gridLayer);
-    }, 500),
-    
+  methods: {    
     /**
      * Resets the Konva stage by removing all document layers and cleaning up objects
      * while preserving the stage instance and utility layers (grid/selection).
@@ -297,19 +224,11 @@ export default {
 
         this.$konvaStore.selectionLayer = selectionLayer;
         this.stage.add(selectionLayer)
-        setupZoom(this.stage);
-        setupPanning(this.stage);
 
         // Initialize grid if needed - do this last after everything is set up
         const { value } = this.editStore.checkboxes.find(
           (x) => x.name === "2dgrid"
         );
-        if (value) {
-          // Use nextTick to ensure all layers are properly initialized
-          this.$nextTick(() => {
-            this.debouncedRenderGrid(gridLayer);
-          });
-        }
       }
     },
     
@@ -336,7 +255,6 @@ export default {
           const gridLayer = this.konvaStore.gridLayer
           if(!gridLayer) return;
           
-          this.debouncedRenderGrid(gridLayer);
         }
 
         this.stage.batchDraw();
