@@ -12,14 +12,6 @@
       </v-btn>
 
       <v-btn
-        variant="outlined"
-        @click="importFile"
-        size="small"
-        class="mr-1 px-2"
-        >Import</v-btn
-      >
-
-      <v-btn
         @click="exportOptions.showExportDialog = true"
         variant="outlined"
         size="small"

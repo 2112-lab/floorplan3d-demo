@@ -1,43 +1,5 @@
 <template> 
-    <div class="pa-5 navbar bg-primary">
-        <div class="navbar-content">
-            <div class="navbar-left">
-                <router-link to="/" style="text-decoration: none; color: #222;">
-                    <span class="rubik-mono-one-regular">Floorplan 3D</span>
-                </router-link>
-            </div>              
-            <div class="navbar-right">
-              <v-menu location="bottom">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    class="mt-n3"
-                    icon="mdi-menu"
-                    v-bind="props"
-                    variant="text"
-                  ></v-btn>
-                </template>
-                <v-list class="bg-primary">
-                  <v-list-item
-                    v-for="(item, index) in internalMenuItems"
-                    :key="index"
-                    :to="item.path"
-                  >
-                    <v-list-item-title>{{ item.title }}</v-list-item-title>
-                  </v-list-item>
-                  <v-list-item
-                    v-for="(item, index) in externalMenuItems"
-                    :key="'ext-'+index"
-                    :href="item.path"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <v-list-item-title>{{ item.title }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
-        </div>
-    </div>    <slot />
+  <slot />
 </template>
 
 <script>
