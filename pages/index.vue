@@ -2,8 +2,6 @@
   <div>
     <LeftPanel />
 
-    <StatusBar />
-
     <LayersPanel />
 
     <!-- Hidden konva renderer for dependencies -->
@@ -17,19 +15,6 @@
       <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
     </main>
 
-    <!-- Console Viewport -->
-    <SlidingViewPort
-      :top="`calc(100vh - 200px)`"
-      type="console"
-      custom-classes="console"
-      :size="editStore.viewPortSize.console"
-      id="consoleViewport"
-    >
-      <template #title> Console </template>
-
-      <Exports v-if="$consoleStore.mode === 'svg'" />
-      <AiConsole v-if="$consoleStore.mode === 'ai'" />
-    </SlidingViewPort>
   </div>
 </template>
 
