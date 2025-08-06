@@ -8,7 +8,6 @@
 import Prism from "prismjs";
 import "prismjs/components/prism-markup";
 import "prismjs/themes/prism.css";
-import { formatSVG } from "~/lib/svg";
 
 
 export default {
@@ -28,7 +27,7 @@ export default {
     code: {
       immediate: true,
       handler(newCode) {
-        const formattedCode = formatSVG(newCode);
+        const formattedCode = null;
         this.highlightedCode = Prism.highlight(
           formattedCode,
           Prism.languages.markup,

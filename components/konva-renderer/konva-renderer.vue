@@ -21,7 +21,6 @@ import {
 } from "~/lib/konva/konva";
 import {debounce,   getActiveLayer} from "~/lib/konva/utils"
 import {setupZoom, setupPanning} from "~/lib/konva/pan-zoom"
-import {createMarqueeSelector} from "~/lib/konva/marquee-selector"
 import {renderGrid, hideGrid} from "~/lib/konva/grid"
 import { toSvg } from "~/lib/svg";;
 
@@ -204,11 +203,6 @@ export default {
       },
       immediate: true,
     },
-    "$konvaStore.stage": {
-      handler(stage) {
-        createMarqueeSelector(stage);
-      },
-    },
     isVisible: {
       handler(visible) {
         if (visible) {
@@ -305,7 +299,6 @@ export default {
         this.stage.add(selectionLayer)
         setupZoom(this.stage);
         setupPanning(this.stage);
-        createMarqueeSelector(this.stage);
 
         // Initialize grid if needed - do this last after everything is set up
         const { value } = this.editStore.checkboxes.find(
