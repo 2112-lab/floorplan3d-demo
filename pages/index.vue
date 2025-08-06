@@ -157,6 +157,32 @@ export default {
         color: 'success',
         timeout: 3000,
       },
+      // Simple document storage replacing Konva store
+      documents: {},
+      // Default configs for vector documents
+      defaultVectorConfigs: {
+        layer: {
+          opacity: { min: 0, max: 1, step: 0.2, value: 1, default: 1 },
+          scale: { min: 0.1, max: 2, step: 0.1, value: 1, default: 1 },
+          pos: {
+            x: { min: -100, max: 100, value: 0, default: 0 },
+            y: { min: -100, max: 100, value: 0, default: 0 },
+          },
+        },
+        extrusion: {
+          height: { min: 1, max: 100, step: 1, value: 30, default: 30 },
+          opacity: { min: 0, max: 1, step: 0.05, value: 1, default: 1 },
+          verticalPosition: { min: -50, max: 50, step: 0.5, value: 0, default: 0 },
+        },
+        svg: {
+          mode: { options: ["path", "polyline"], value: "path", default: "path" },
+        },
+      },
+      defaultMetadata: {
+        category: "vector",
+        type: "svg",
+        subtype: "paths",
+      },
     };
   },
   mounted() {
@@ -169,6 +195,11 @@ export default {
     setTimeout(() => {
       this.autoImportSvg();
     }, 500);
+    
+    // Set up a watcher to sync documents from Konva store
+    this.$watch(() => this.$konvaStore.documents, (newDocs) => {
+      this.documents = { ...newDocs };
+    }, { deep: true, immediate: true });
   },
   computed: {
     $konvaStore() {
@@ -179,10 +210,104 @@ export default {
     }
   },
   methods: {
+    // Simple document management methods that sync with Konva store
+    addDocument(doc_id, name, configs) {
+      // Check if document already exists to prevent duplication
+      if (this.documents[doc_id]) {
+        console.warn(`Document with ID ${doc_id} already exists. Skipping to prevent duplication.`);
+        return;
+      }
+      
+      // Add to both local storage and Konva store
+      this.$konvaStore.addDocument(doc_id, name, configs);
+      
+      // Sync to local storage for easy access
+      this.syncDocumentsFromStore();
+    },
+
+    syncDocumentsFromStore() {
+      // Sync the Konva store documents to local reactive data
+      this.documents = { ...this.$konvaStore.documents };
+    },
+
+    getUniqueDisplayName(baseName) {
+      const existingNames = Object.values(this.documents).map(doc => doc.ui.displayName);
+      
+      if (!existingNames.includes(baseName)) {
+        return baseName;
+      }
+      
+      let highestNumber = 1;
+      const baseNameRegex = new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\((\\d+)\\)$`);
+      
+      existingNames.forEach(name => {
+        const match = name.match(baseNameRegex);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num >= highestNumber) {
+            highestNumber = num + 1;
+          }
+        }
+      });
+      
+      return `${baseName} (${highestNumber})`;
+    },
+
+    setDocumentActive(doc_id) {
+      // Deactivate all documents first
+      Object.values(this.documents).forEach(doc => {
+        doc.active = false;
+      });
+      
+      // Activate the specified document
+      if (this.documents[doc_id]) {
+        this.documents[doc_id].active = true;
+        console.log(`Document ${doc_id} set as active`);
+      }
+    },
+
+    setDocumentActive(doc_id) {
+      // Use Konva store method and sync
+      this.$konvaStore.setDocumentActive(doc_id);
+      this.syncDocumentsFromStore();
+    },
+
+    toggleDocumentVisibility(documentId) {
+      this.$konvaStore.toggleDocumentVisibility(documentId);
+      this.syncDocumentsFromStore();
+    },
+
+    toggleDocumentSelected(documentId) {
+      this.$konvaStore.toggleDocumentSelected(documentId);
+      this.syncDocumentsFromStore();
+    },
+
+    getActiveDocument() {
+      const activeDoc = Object.values(this.documents).find(doc => doc.active);
+      if (!activeDoc) return null;
+      
+      const docId = Object.keys(this.documents).find(key => this.documents[key].active);
+      return {
+        ...activeDoc,
+        id: docId
+      };
+    },
+
+    getBaseLayer() {
+      // Access baseLayer through the KonvaRenderer component
+      return this.konvaRenderer?.konvaStore?.baseLayer || null;
+    },
+
+    clearAllDocuments() {
+      // Use Konva store method and sync
+      this.$konvaStore.clearAllDocuments();
+      this.syncDocumentsFromStore();
+    },
+
     async autoImportSvg() {
       try {
         // Check if documents already exist (prevents duplication during hot reload)
-        if (Object.keys(this.$konvaStore.documents).length > 0) {
+        if (Object.keys(this.documents).length > 0) {
           console.log('Documents already exist, skipping auto-import to prevent duplication');
           return;
         }
@@ -212,7 +337,7 @@ export default {
         // Process vector documents (rooms and walls)
         for (let doc of sortedVectorDocs) {
           // Check if document with this ID already exists (prevents duplication during hot reload)
-          if (this.$konvaStore.documents[doc.id]) {
+          if (this.documents[doc.id]) {
             console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
             continue;
           }
@@ -232,7 +357,7 @@ export default {
           const docCopy = safeDeepClone(doc);
           
           // Add the document to the store with the processed order
-          this.$konvaStore.addDocument(doc.id, doc.name, {
+          this.addDocument(doc.id, doc.name, {
             ...docCopy,
             ui: {
               ...docCopy.ui,
@@ -243,11 +368,11 @@ export default {
 
         setTimeout(() => {
           // Sequentially set each vector document as active, to trigger renderSvgToScene
-          for(let docKey in this.$konvaStore.documents) {
-            let doc = this.$konvaStore.documents[docKey];
+          for(let docKey in this.documents) {
+            let doc = this.documents[docKey];
             if(doc.metadata.category === "vector") {
               setTimeout(() => {
-                this.$konvaStore.setDocumentActive(doc.id);
+                this.setDocumentActive(doc.id);
               }, 5)
             }
           }          
@@ -282,7 +407,7 @@ export default {
           // Process vector documents (rooms and walls)
           for (let doc of sortedVectorDocs) {
             // Check if document with this ID already exists (prevents duplication)
-            if (this.$konvaStore.documents[doc.id]) {
+            if (this.documents[doc.id]) {
               console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
               continue;
             }
@@ -302,7 +427,7 @@ export default {
             const docCopy = safeDeepClone(doc);
             
             // Add the document to the store with the processed order
-            this.$konvaStore.addDocument(doc.id, doc.name, {
+            this.addDocument(doc.id, doc.name, {
               ...docCopy,
               ui: {
                 ...docCopy.ui,
@@ -321,7 +446,7 @@ export default {
 
     // Mock methods for the new Tools panel
     resetScene() {
-      if(Object.keys(this.$konvaStore.documents).length === 0) {
+      if(Object.keys(this.documents).length === 0) {
         return;
       }
 
@@ -332,7 +457,7 @@ export default {
       }
 
       // Use the new clearAllDocuments method instead of direct assignment
-      this.$konvaStore.clearAllDocuments();
+      this.clearAllDocuments();
 
       // Use the konva-renderer's resetKonva method.
       this.$eventBus.emit('resetKonva');
