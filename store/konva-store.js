@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { useThreeStore } from "./three-store";
 
 export const defaultRasterConfigs = {
   layer: {

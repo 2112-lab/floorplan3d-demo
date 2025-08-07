@@ -122,7 +122,6 @@
 import SvgRenderer from "~/components/svg-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
-import { useThreeStore } from "~/store/three-store";
 import { cloneDeep } from 'lodash';
 import { toSvg } from "~/lib/svg";
 import Floorplan3D from "~/lib/Floorplan3D";
@@ -136,7 +135,6 @@ export default {
   },
     data() {
     return {
-      threestore: useThreeStore(),
       svgRenderer: null, // Renamed from svgRenderer
       threejsRenderer: null,
       expandedSections: {
