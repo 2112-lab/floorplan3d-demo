@@ -128,6 +128,7 @@ import { useConsoleStore } from "~/store/console-store";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
+import { toSvg } from "~/lib/svg";
 import Floorplan3D from "~/lib/Floorplan3D";
 import SvgDocumentParser from "~/lib/svg-document-parser";
 
@@ -211,6 +212,29 @@ export default {
         this.renderDocumentToScene(this.$consoleStore.documentId, newSvg);
       }
     }, { immediate: false });
+
+    // Set up a watcher for konvaObjects to generate SVG and update console store
+    this.$watch(() => this.konvaObjects, (objects) => {
+      const doc = this.$konvaStore.getActiveDocument();
+      const doc_id = doc?.id;
+      
+      if (!doc_id || !doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) return;
+      
+      const svg = toSvg(objects, doc.docConfigs.svg.mode.value);
+      
+      // Update the document's SVG content based on mode
+      if (doc.docConfigs.svg.mode.value === "path") {
+        this.$konvaStore.setSvgPath(doc_id, svg);
+      } else {
+        this.$konvaStore.setSvgPolyline(doc_id, svg);
+      }
+      
+      // Get the current document ID
+      const currentDocument = this.$konvaStore.getActiveDocument();
+      const documentId = currentDocument ? currentDocument.id : null;
+
+      this.$consoleStore.setConsoleOutput(svg, documentId);
+    }, { deep: true, immediate: false });
   },
   computed: {
     $konvaStore() {
@@ -221,7 +245,14 @@ export default {
     },
     $eventBus() {
       return useEventBusStore();
-    }
+    },
+    // Computed property for active document's Konva objects
+    konvaObjects() {
+      const activeDocument = this.$konvaStore.getActiveDocument();
+      if (!activeDocument) return {};
+      if (!activeDocument.konva || !activeDocument.konva.objects) return {};
+      return activeDocument.konva.objects;
+    },
   },
   methods: {
     // Simple document management methods that sync with Konva store

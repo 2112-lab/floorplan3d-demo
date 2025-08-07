@@ -16,7 +16,6 @@
 
 <script>
 import Konva from "konva";
-import { toSvg } from "~/lib/svg";
 
 import { useEditStore } from "~/store/edit";
 import { useKonvaStore } from "~/store/konva-store";
@@ -77,12 +76,6 @@ export default {
     svgData() {
       return this.editStore.svgData;
     },
-    konvaObjects(){
-      const activeDocument = this.$konvaStore.getActiveDocument();
-      if (!activeDocument) return {};
-      if (!activeDocument.konva || !activeDocument.konva.objects) return {};
-      return activeDocument.konva.objects;
-    },
     svgMode(){
       const activeDocument = this.$konvaStore.getActiveDocument();
       if (!activeDocument) return "path";
@@ -90,32 +83,7 @@ export default {
       return activeDocument.docConfigs.svg.mode.value;
     },
   },
-  watch: {
-    konvaObjects: {
-      handler(objects) {
-        const doc = this.$konvaStore.getActiveDocument()
-        const doc_id = doc.id
-        if(!doc_id || !doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode ) return;
-        const svg = toSvg(objects, doc.docConfigs.svg.mode.value)
-
-        if(doc.docConfigs.svg.mode.value === "path") {
-          this.$konvaStore.setSvgPath(doc_id, svg)
-        }
-        else {
-          console.log("svg polyline", svg)
-          this.$konvaStore.setSvgPolyline(doc_id, svg)
-        }
-        
-        // Get the current document ID
-        const currentDocument = this.$konvaStore.getActiveDocument();
-        const documentId = currentDocument ? currentDocument.id : null;
-
-        this.$consoleStore.setConsoleOutput(svg, documentId);
-        
-      },
-      deep: true,
-    },
-  },
+  // konvaObjects watcher logic moved to index.vue for better centralization
   methods: {    
     /**
      * Resets the Konva stage by removing all document layers and cleaning up objects
