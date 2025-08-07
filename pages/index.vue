@@ -3,7 +3,6 @@
   <v-app id="appContainer" style="background-color:#f5f5f5;">     
     <!-- Hidden SVG renderer for dependencies (no longer uses Konva) -->
     <div style="display: none">
-      <SvgRenderer ref="svgRenderer" />
       <div ref="hiddenContainer"></div>
     </div>
 
@@ -119,23 +118,22 @@
 </template>
 
 <script>
-import SvgRenderer from "~/components/svg-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { cloneDeep } from 'lodash';
 import { toSvg } from "~/lib/svg";
 import Floorplan3D from "~/lib/Floorplan3D";
 import SvgDocumentParser from "~/lib/svg-document-parser";
+import { useSvgStore } from "~/store/svg-store";
 
 export default {
   components: {
-    SvgRenderer,
     ThreejsRenderer,
     LayersPanel
   },
     data() {
     return {
-      svgRenderer: null, // Renamed from svgRenderer
+      svgStore: useSvgStore(),
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
@@ -176,7 +174,6 @@ export default {
   },
   mounted() {
     // Store references to renderers
-    this.svgRenderer = this.$refs.svgRenderer; // Keep ref name for compatibility
     this.threejsRenderer = this.$refs.threejsRenderer;
     
     // Auto-import the FP3D-00-07.svg file on page load with a small delay
@@ -186,7 +183,7 @@ export default {
     }, 500);
     
     // Set up a watcher to sync documents from SVG renderer's store
-    this.$watch(() => this.svgRenderer?.svgStore?.documents || {}, (newDocs) => {
+    this.$watch(() => this.svgStore.documents || {}, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
   },
@@ -200,18 +197,18 @@ export default {
       }
       
       // Add to SVG renderer's store if available
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.addDocument(doc_id, name, configs);
+      if (this.svgStore) {
+        this.svgStore.addDocument(doc_id, name, configs);
       }
       
       // Sync to local storage for easy access
-      this.syncDocumentsFromSvgRenderer();
+      this.syncDocumentsFromSvgStore();
     },
 
-    syncDocumentsFromSvgRenderer() {
+    syncDocumentsFromSvgStore() {
       // Sync the SVG renderer store documents to local reactive data
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.documents = { ...this.svgRenderer.svgStore.documents };
+      if (this.svgStore) {
+        this.documents = { ...this.svgStore.documents };
       }
     },
 
@@ -240,10 +237,10 @@ export default {
 
     setDocumentActive(doc_id) {
       // Use SVG renderer's store to set document active
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.setDocumentActive(doc_id);
+      if (this.svgStore) {
+        this.svgStore.setDocumentActive(doc_id);
       }
-      this.syncDocumentsFromSvgRenderer();
+      this.syncDocumentsFromSvgStore();
       
       // Directly generate and render SVG for vector documents
       const activeDoc = this.documents[doc_id];
@@ -254,18 +251,18 @@ export default {
     },
 
     toggleDocumentSelected(documentId) {
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.toggleDocumentSelected(documentId);
+      if (this.svgStore) {
+        this.svgStore.toggleDocumentSelected(documentId);
       }
-      this.syncDocumentsFromSvgRenderer();
+      this.syncDocumentsFromSvgStore();
     },
 
     clearAllDocuments() {
       // Clear SVG renderer store documents
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.clearAllDocuments();
+      if (this.svgStore) {
+        this.svgStore.clearAllDocuments();
       }
-      this.syncDocumentsFromSvgRenderer();
+      this.syncDocumentsFromSvgStore();
     },
 
     // Extract shared logic for processing vector documents
