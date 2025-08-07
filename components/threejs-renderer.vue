@@ -5,78 +5,20 @@
 </template>
 
 <script>
-import * as THREE from "three";
 import Floorplan3D from "~/lib/Floorplan3D";
 import { useSvgStore } from "~/store/svg-store";
 
 export default {
-  props: {
-    size: {
-      type: Number,
-      default: 30,
-    },
-  },
   data() {
     return {
       svgStore: useSvgStore(),
-      verticalPosition: 0,
     };
   },
-  computed: {
-    activeDocument() {
-      if (!this.svgStore || !this.svgStore.documents) {
-        return null;
-      }
-      
-      const activeDoc = Object.values(this.svgStore.documents).find(doc => doc && doc.active === true);
-      const activeDocId = Object.keys(this.svgStore.documents).find(id => this.svgStore.documents[id] === activeDoc);
-
-      if (activeDoc) {
-        return { ...activeDoc, id: activeDocId };
-      } else if (Object.keys(this.svgStore.documents).length > 0) {
-        const firstDocId = Object.keys(this.svgStore.documents)[0];
-        return { ...this.svgStore.documents[firstDocId], id: firstDocId };
-      }
-      
-      return null;
-    },
-  },
   mounted() {
-    this.resizeObserver = new ResizeObserver(() => {
-      const el = this.$refs.threejsContainer;
-      if (!el) return;
-      if (el.clientWidth > 0 && el.clientHeight > 0) {
-        if (!this.floorplan3d) {
-          this.initThreeJs();
-          this.initGridHelper();
-        } else {
-          this.resizeThreeJs();
-        }
-      }
-    });
-    this.resizeObserver.observe(this.$refs.threejsContainer);
-    
-    // Add listener for the custom 3D visibility toggle event
-    document.addEventListener('toggle-3d-visibility', this.handle3DVisibilityToggle);
+    this.initThreeJs();
   },
-  beforeDestroy() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-    
-    // Remove event listener when component is destroyed
-    document.removeEventListener('toggle-3d-visibility', this.handle3DVisibilityToggle);
-    
+  beforeDestroy() {    
     this.cleanupThreeJs();
-  },
-  watch: {
-    size: {
-      async handler(val) {
-        await this.$nextTick();
-        this.resizeThreeJs();
-      },
-      immediate: true,
-    },
   },
   methods: {
     initThreeJs() {
@@ -95,32 +37,11 @@ export default {
       // Initialize using Floorplan3D class
       this.floorplan3d = new Floorplan3D(rendererRef, width, height);
 
-      // Create a group for rendered content
-      this.contentGroup = new THREE.Group();
-      this.contentGroup.name = "contentGroup";
-      this.floorplan3d.scene.add(this.contentGroup);
-
       // Make sure the animation is running
       this.floorplan3d.startAnimation();
     },
     cleanupThreeJs() {
       if (this.floorplan3d) {
-
-        // Clear only the content group
-        if (this.contentGroup) {
-          while (this.contentGroup.children.length > 0) {
-            const child = this.contentGroup.children[0];
-            this.contentGroup.remove(child);
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) {
-              if (Array.isArray(child.material)) {
-                child.material.forEach((material) => material.dispose());
-              } else {
-                child.material.dispose();
-              }
-            }
-          }
-        }
 
         // Dispose of renderer
         if (this.floorplan3d.renderer) {
@@ -131,96 +52,6 @@ export default {
 
         // Clear references
         this.floorplan3d = null;
-        this.contentGroup = null;
-      }
-    },
-    resizeThreeJs() {
-      if (!this.floorplan3d) return;
-      const containerRef = this.$refs.threejsContainer;
-      if (!containerRef) return;
-
-      const newWidth = containerRef.offsetWidth;
-      const newHeight = containerRef.offsetHeight;
-
-      if (newWidth > 0 && newHeight > 0) {
-        // Update renderer size
-        this.floorplan3d.renderer.setSize(newWidth, newHeight);
-        this.floorplan3d.renderer.setPixelRatio(window.devicePixelRatio);
-
-        // Update camera aspect ratio and projection matrix
-        this.floorplan3d.camera.aspect = newWidth / newHeight;
-        this.floorplan3d.camera.updateProjectionMatrix();
-
-        // Force a render
-        this.floorplan3d.renderer.render(this.floorplan3d.scene, this.floorplan3d.camera);
-      }
-    },
-    initGridHelper() {
-      if (!this.floorplan3d || !this.floorplan3d.scene) return;
-      
-      // Use the new addGridHelper method from Floorplan3D
-      this.floorplan3d.addGridHelper(100, 100, { y: -0.1 });
-      
-      // Force a re-render to ensure the grid is visible
-      this.floorplan3d.renderScene();
-    },
-    handle3DVisibilityToggle(event) {
-      if (!this.floorplan3d || !this.floorplan3d.scene) return;
-      
-      const { documentId, visible } = event.detail;
-      console.log(`Handling 3D visibility toggle event for document ${documentId}:`, visible);
-      
-      // Find the content group
-      const contentGroup = this.floorplan3d.scene.getObjectByName("contentGroup");
-      if (!contentGroup) return;
-      
-      // Find the specific room group for this document
-      const groupName = `roomGroup-${documentId}`;
-      const roomGroup = contentGroup.getObjectByName(groupName);
-      
-      if (roomGroup) {
-        console.log(`Updating visibility of ${groupName} to:`, visible);
-        roomGroup.visible = visible;
-        
-        // Force a render to update the view
-        this.floorplan3d.renderScene();
-        return true;
-      } else {
-        console.log(`Room group ${groupName} not found in scene`);
-      }
-      
-      return false;
-    },
-    handleVerticalPositionChange(value) {
-      if (!this.activeDocument) return;
-      
-      // Get the document ID
-      const documentId = this.activeDocument.id;
-      
-      if (!documentId) {
-        console.warn('Cannot update vertical position: Document ID not found');
-        return;
-      }
-      
-      // Update document config
-      this.activeDocument.docConfigs.extrusion.verticalPosition.value = value;
-        // Update the vertical position in the 3D scene
-      if (this.floorplan3d) {
-        // Create a document object with the same structure expected by update3dVerticalPosition
-        const document = {
-          id: documentId,
-          docConfigs: {
-            extrusion: {
-              verticalPosition: {
-                value: value
-              },
-              height: {
-                value: this.activeDocument.docConfigs.extrusion.height?.value || 1
-              }
-            }
-          }
-        };
-        this.floorplan3d.update3dVerticalPosition(document);
       }
     },
   },

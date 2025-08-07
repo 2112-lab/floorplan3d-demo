@@ -26,25 +26,5 @@ export default {
     }
   },
 
-  mounted() {
-    // Initialize the store - no visual components needed
-    this.initializeSvgStore();
-  },
-
-  methods: {    
-    initializeSvgStore() {
-      // Initialize the store without any visual components
-      // The store will handle document management and SVG generation
-      console.log('SVG Store initialized - Konva dependency removed');
-    },
-  },
 };
 </script>
-
-<style>
-.svg-container {
-  display: none;
-  height: 0;
-  width: 0;
-}
-</style>
