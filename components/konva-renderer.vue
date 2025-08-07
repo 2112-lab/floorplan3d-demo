@@ -19,7 +19,6 @@ import Konva from "konva";
 
 import { useEditStore } from "~/store/edit";
 import { useKonvaStore } from "~/store/konva-store";
-import { useEventBusStore } from "~/store/event-bus";
 
 export default {
   props: {
@@ -42,37 +41,16 @@ export default {
     };
   },
   mounted() {
-    this.$eventBus.on('resetKonva', () => {
-      this.resetKonva();
-    });
-    console.log(this.$konvaStore.documents)
-    this.resizeObserver = new ResizeObserver(() => {
-      this.initKonvaIfNeeded();
-      this.resizeKonva();
-    });
-    this.resizeObserver.observe(this.$refs["konva-container"]);
-
+    this.initKonvaIfNeeded();
   },
   beforeDestroy() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
     if (this.stage) {
       this.stage.destroy();
       this.stage = null;
     }
-
-    // Remove keydown event listener
-    document.removeEventListener("keydown", this.handleKeyDown);
-    // Remove Shift key event listeners
-    document.removeEventListener("keydown", this.handleShiftKeyDown);
-    document.removeEventListener("keyup", this.handleShiftKeyUp);
   },
 
   computed: {
-    $eventBus() {
-      return useEventBusStore();
-    },
     svgData() {
       return this.editStore.svgData;
     },

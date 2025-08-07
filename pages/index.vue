@@ -123,7 +123,6 @@ import KonvaRenderer from "~/components/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
-import { useKonvaStore } from "~/store/konva-store";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
@@ -200,15 +199,12 @@ export default {
       this.autoImportSvg();
     }, 500);
     
-    // Set up a watcher to sync documents from Konva store
-    this.$watch(() => this.$konvaStore.documents, (newDocs) => {
+    // Set up a watcher to sync documents from Konva renderer's store
+    this.$watch(() => this.konvaRenderer?.konvaStore?.documents || {}, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
   },
   computed: {
-    $konvaStore() {
-      return useKonvaStore();
-    },
     $eventBus() {
       return useEventBusStore();
     },
@@ -222,16 +218,20 @@ export default {
         return;
       }
       
-      // Add to both local storage and Konva store
-      this.$konvaStore.addDocument(doc_id, name, configs);
+      // Add to konva renderer's store if available
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.addDocument(doc_id, name, configs);
+      }
       
       // Sync to local storage for easy access
-      this.syncDocumentsFromStore();
+      this.syncDocumentsFromKonvaRenderer();
     },
 
-    syncDocumentsFromStore() {
-      // Sync the Konva store documents to local reactive data
-      this.documents = { ...this.$konvaStore.documents };
+    syncDocumentsFromKonvaRenderer() {
+      // Sync the Konva renderer store documents to local reactive data
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.documents = { ...this.konvaRenderer.konvaStore.documents };
+      }
     },
 
     getUniqueDisplayName(baseName) {
@@ -271,9 +271,11 @@ export default {
     },
 
     setDocumentActive(doc_id) {
-      // Use Konva store method and sync
-      this.$konvaStore.setDocumentActive(doc_id);
-      this.syncDocumentsFromStore();
+      // Use konva renderer's store to set document active
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.setDocumentActive(doc_id);
+      }
+      this.syncDocumentsFromKonvaRenderer();
       
       // Directly generate and render SVG for vector documents
       const activeDoc = this.documents[doc_id];
@@ -284,8 +286,10 @@ export default {
     },
 
     toggleDocumentSelected(documentId) {
-      this.$konvaStore.toggleDocumentSelected(documentId);
-      this.syncDocumentsFromStore();
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.toggleDocumentSelected(documentId);
+      }
+      this.syncDocumentsFromKonvaRenderer();
     },
 
     getActiveDocument() {
@@ -305,9 +309,11 @@ export default {
     },
 
     clearAllDocuments() {
-      // Use Konva store method and sync
-      this.$konvaStore.clearAllDocuments();
-      this.syncDocumentsFromStore();
+      // Clear konva renderer store documents
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.clearAllDocuments();
+      }
+      this.syncDocumentsFromKonvaRenderer();
     },
 
     async autoImportSvg() {
@@ -349,14 +355,15 @@ export default {
           }
           
           // Ensure baseLayer exists before using it
-          if (!this.$konvaStore.baseLayer) {
+          const baseLayer = this.getBaseLayer();
+          if (!baseLayer) {
             console.error('Konva baseLayer not initialized. Cannot import vector documents.');
             this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
             return;
           }
 
           const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
-          this.$konvaStore.baseLayer.add(layerKonva);
+          baseLayer.add(layerKonva);
           layersToCenter.push(layerKonva);
           
           // Create a proper deep copy with independent properties            
@@ -419,14 +426,15 @@ export default {
             }
             
             // Ensure baseLayer exists before using it
-            if (!this.$konvaStore.baseLayer) {
+            const baseLayer = this.getBaseLayer();
+            if (!baseLayer) {
               console.error('Konva baseLayer not initialized. Cannot import vector documents.');
               this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
               return;
             }
 
             const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
-            this.$konvaStore.baseLayer.add(layerKonva);
+            baseLayer.add(layerKonva);
             layersToCenter.push(layerKonva);
             
             // Create a proper deep copy with independent properties            
@@ -506,7 +514,7 @@ export default {
 
     // Method to generate SVG from Konva objects and render to 3D scene
     generateAndRenderSvg(documentId) {
-      const doc = this.$konvaStore.getDocument(documentId);
+      const doc = this.getDocument(documentId);
       if (!doc || !doc.konva || !doc.konva.objects) {
         console.warn(`Document ${documentId} not found or has no Konva objects`);
         return;
@@ -523,9 +531,9 @@ export default {
       
       // Update the document's SVG content based on mode
       if (svgMode === "path") {
-        this.$konvaStore.setSvgPath(documentId, svg);
+        this.setSvgPath(documentId, svg);
       } else {
-        this.$konvaStore.setSvgPolyline(documentId, svg);
+        this.setSvgPolyline(documentId, svg);
       }
       
       // Render to 3D scene
@@ -534,13 +542,37 @@ export default {
 
     // Method to regenerate SVG for the currently active document
     updateActiveSvg() {
-      const activeDoc = this.$konvaStore.getActiveDocument();
+      const activeDoc = this.getActiveDocument();
       if (activeDoc && activeDoc.metadata.category === "vector") {
-        // Find the document ID from the documents object
-        const docId = Object.keys(this.documents).find(key => this.documents[key].active);
-        if (docId) {
-          this.generateAndRenderSvg(docId);
-        }
+        this.generateAndRenderSvg(activeDoc.id);
+      }
+    },
+
+    // Helper methods for document management
+    getDocument(documentId) {
+      return this.documents[documentId];
+    },
+
+    getActiveDocument() {
+      const activeDoc = Object.values(this.documents).find(doc => doc.active);
+      if (!activeDoc) return null;
+      
+      const docId = Object.keys(this.documents).find(key => this.documents[key].active);
+      return {
+        ...activeDoc,
+        id: docId
+      };
+    },
+
+    setSvgPath(documentId, svg) {
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.setSvgPath(documentId, svg);
+      }
+    },
+
+    setSvgPolyline(documentId, svg) {
+      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
+        this.konvaRenderer.konvaStore.setSvgPolyline(documentId, svg);
       }
     },
   },
