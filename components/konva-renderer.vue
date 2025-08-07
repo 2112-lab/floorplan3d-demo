@@ -3,7 +3,6 @@
     ref="konva-container"
     id="konva-container"
     class="konva-container"
-    :class="{ 'position-relative': sizeProp }"
   >
     <div
       ref="konva-renderer"
@@ -17,26 +16,13 @@
 <script>
 import Konva from "konva";
 
-import { useEditStore } from "~/store/edit";
 import { useKonvaStore } from "~/store/konva-store";
 
 export default {
-  props: {
-    sizeProp: {
-      type: Number,
-      default: null,
-    },
-    isVisible: {
-      type: Boolean,
-    },
-  },
   data() {
     return {
-      size: { width: 0, height: 0 },
       stage: null,
       layer: null,
-      textLayer: null,
-      editStore: useEditStore(),
       konvaStore: useKonvaStore(),
     };
   },
@@ -90,7 +76,6 @@ export default {
 
         // Initialize layers
         const gridLayer = new Konva.Group({ name: "grid" }); 
-        // const textLayer = new Konva.Layer({ name: "text" });
         const selectionLayer = new Konva.Layer({
           name: "selection",
         });
@@ -104,11 +89,6 @@ export default {
 
         this.$konvaStore.selectionLayer = selectionLayer;
         this.stage.add(selectionLayer)
-
-        // Initialize grid if needed - do this last after everything is set up
-        const { value } = this.editStore.checkboxes.find(
-          (x) => x.name === "2dgrid"
-        );
       }
     },
   },
