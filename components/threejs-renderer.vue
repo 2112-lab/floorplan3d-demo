@@ -11,7 +11,7 @@ import Floorplan3D from "~/lib/Floorplan3D";
 import { useEditStore } from "~/store/edit";
 import { useThreeStore } from "~/store/three-store";
 import { useConsoleStore } from "~/store/console-store";
-import { useKonvaStore } from "~/store/konva-store";
+import { useSvgStore } from "~/store/svg-store";
 
 export default {
   props: {
@@ -24,25 +24,25 @@ export default {
     return {
       threestore: useThreeStore(),
       editStore: useEditStore(),
-      konvaStore: useKonvaStore(),
+      svgStore: useSvgStore(),
       consoleStore: useConsoleStore(),
       verticalPosition: 0,
     };
   },
   computed: {
     activeDocument() {
-      if (!this.konvaStore || !this.konvaStore.documents) {
+      if (!this.svgStore || !this.svgStore.documents) {
         return null;
       }
       
-      const activeDoc = Object.values(this.konvaStore.documents).find(doc => doc && doc.active === true);
-      const activeDocId = Object.keys(this.konvaStore.documents).find(id => this.konvaStore.documents[id] === activeDoc);
+      const activeDoc = Object.values(this.svgStore.documents).find(doc => doc && doc.active === true);
+      const activeDocId = Object.keys(this.svgStore.documents).find(id => this.svgStore.documents[id] === activeDoc);
 
       if (activeDoc) {
         return { ...activeDoc, id: activeDocId };
-      } else if (Object.keys(this.konvaStore.documents).length > 0) {
-        const firstDocId = Object.keys(this.konvaStore.documents)[0];
-        return { ...this.konvaStore.documents[firstDocId], id: firstDocId };
+      } else if (Object.keys(this.svgStore.documents).length > 0) {
+        const firstDocId = Object.keys(this.svgStore.documents)[0];
+        return { ...this.svgStore.documents[firstDocId], id: firstDocId };
       }
       
       return null;
@@ -103,44 +103,6 @@ export default {
       },
       immediate: false,
     },
-    // // Optimize the deep watcher on threeStore.settings by using specific property watchers
-    // "$threeStore.settings.wallsSettings.height": function(newHeight) {
-    //   if (!this.floorplan3d || !this.floorplan3d.scene) return;
-      
-    //   // Only re-render if we have wall content
-    //   const contentGroup = this.floorplan3d.scene.getObjectByName("contentGroup");
-    //   if (!contentGroup) return;
-      
-    //   const wallGroup = contentGroup.getObjectByName("wallGroup");
-    //   if (wallGroup && this.$konvaStore.wallsSVG) {
-    //     this.threestore.settings.wallsSettings.height = newHeight;
-    //     // this.floorplan3d.renderWalls(this.$konvaStore.wallsSVG, this.threestore);
-    //   }
-    // },
-    // "$threeStore.settings.roomSettings.height": function(newHeight) {
-    //   if (!this.floorplan3d || !this.floorplan3d.scene) return;
-      
-    //   const contentGroup = this.floorplan3d.scene.getObjectByName("contentGroup");
-    //   if (!contentGroup) return;
-      
-    //   const floorGroup = contentGroup.getObjectByName("floorGroup");
-    //   if (floorGroup && this.$konvaStore.roomsSVG) {
-    //     this.threestore.settings.roomSettings.height = newHeight;
-    //   }
-    // },
-    // "$threeStore.settings.uploadedSVGSettings.height": function(newHeight) {
-    //   if (!this.floorplan3d || !this.floorplan3d.scene) return;
-      
-    //   if (this.$konvaStore.uploadedSVG) {
-    //     this.threestore.settings.uploadedSVGSettings.height = newHeight;
-    //     this.floorplan3d.renderUploadedSvg(this.$konvaStore.uploadedSVG, this.threestore);
-    //   }
-    // },
-    // Replace deep document watcher with specific document change watcher
-    // "$konvaStore.activeDocumentId": function() {
-    //   this.renderActiveDocument();
-    // },
-    // SVG rendering is now handled in index.vue when documents are activated
   },
   methods: {
     initThreeJs() {

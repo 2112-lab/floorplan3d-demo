@@ -15,7 +15,6 @@
     "@pinia/nuxt": "^0.10.1",
     "@svgedit/svgcanvas": "^7.2.4",
     "jszip": "^3.10.1",
-    "konva": "^9.3.20",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "nuxt": "^3.16.2",

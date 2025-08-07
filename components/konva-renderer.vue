@@ -1,106 +1,50 @@
 <template>
   <div
-    ref="konva-container"
-    id="konva-container"
-    class="konva-container"
+    ref="svg-container"
+    id="svg-container"
+    class="svg-container"
+    style="display: none;"
   >
-    <div
-      ref="konva-renderer"
-      class="w-100 h-100 left-0 top-0"
-      :class="{}"
-      id="konva-renderer"
-    ></div>
+    <!-- Hidden container for SVG processing - no visual rendering needed -->
   </div>
 </template>
 
 <script>
-import Konva from "konva";
-
-import { useKonvaStore } from "~/store/konva-store";
+import { useSvgStore } from "~/store/svg-store";
 
 export default {
   data() {
     return {
-      stage: null,
-      layer: null,
-      konvaStore: useKonvaStore(),
+      svgStore: useSvgStore(),
     };
   },
-  mounted() {
-    this.initKonvaIfNeeded();
-  },
-  beforeDestroy() {
-    if (this.stage) {
-      this.stage.destroy();
-      this.stage = null;
+  
+  computed: {
+    // Provide backward compatibility by exposing svgStore as konvaStore
+    konvaStore() {
+      return this.svgStore;
     }
   },
 
-  // konvaObjects watcher logic moved to index.vue for better centralization
+  mounted() {
+    // Initialize the store - no visual components needed
+    this.initializeSvgStore();
+  },
+
   methods: {    
-
-    initializeStage(containerRef, width, height) {
-      const stage = new Konva.Stage({
-        container: containerRef,
-        width: width,
-        height: height,
-        draggable: false,
-      });
-
-      return stage;
-    },
-    
-    initKonvaIfNeeded() {
-      const container = this.$refs["konva-container"];
-      if (!container) return;
-
-      // Check if container is hidden, and if so, use minimum dimensions
-      const isHidden = getComputedStyle(container.parentElement).display === 'none';
-      const width = isHidden ? 100 : container.clientWidth;
-      const height = isHidden ? 100 : container.clientHeight;
-
-      if (
-        !this.stage &&
-        width > 0 &&
-        height > 0
-      ) {
-        this.stage = this.initializeStage(
-          container,
-          width,
-          height
-        );
-        this.konvaStore.setStage(this.stage);
-        const baseLayer = new Konva.Layer({ name: "baseLayer" });
-        this.konvaStore.setBaseLayer(baseLayer);
-       
-
-        // Initialize layers
-        const gridLayer = new Konva.Group({ name: "grid" }); 
-        const selectionLayer = new Konva.Layer({
-          name: "selection",
-        });
-
-        this.$konvaStore.gridLayer = gridLayer;
-        
-        // Setup grid layer
-        this.konvaStore.baseLayer.add(gridLayer)
-
-        this.stage.add(baseLayer);
-
-        this.$konvaStore.selectionLayer = selectionLayer;
-        this.stage.add(selectionLayer)
-      }
+    initializeSvgStore() {
+      // Initialize the store without any visual components
+      // The store will handle document management and SVG generation
+      console.log('SVG Store initialized - Konva dependency removed');
     },
   },
 };
 </script>
 
 <style>
-.konva-container {
-  border: 1px solid #ccc;
-  height: 100%;
-  z-index: -10;
-  overflow-y: none;
+.svg-container {
+  display: none;
+  height: 0;
+  width: 0;
 }
 </style>
-

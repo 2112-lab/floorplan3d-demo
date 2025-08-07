@@ -1,7 +1,7 @@
 <template>  
   <!-- Main application container with light background -->
   <v-app id="appContainer" style="background-color:#f5f5f5;">     
-    <!-- Hidden konva renderer for dependencies -->
+    <!-- Hidden SVG renderer for dependencies (no longer uses Konva) -->
     <div style="display: none">
       <KonvaRenderer ref="konvaRenderer" />
       <div ref="hiddenContainer"></div>
@@ -124,7 +124,6 @@ import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { cloneDeep } from 'lodash';
-import Konva from "konva";
 import { toSvg } from "~/lib/svg";
 import Floorplan3D from "~/lib/Floorplan3D";
 import SvgDocumentParser from "~/lib/svg-document-parser";
@@ -135,10 +134,10 @@ export default {
     ThreejsRenderer,
     LayersPanel
   },
-  data() {
+    data() {
     return {
       threestore: useThreeStore(),
-      konvaRenderer: null,
+      svgRenderer: null, // Renamed from konvaRenderer
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
@@ -179,7 +178,7 @@ export default {
   },
   mounted() {
     // Store references to renderers
-    this.konvaRenderer = this.$refs.konvaRenderer;
+    this.svgRenderer = this.$refs.konvaRenderer; // Keep ref name for compatibility
     this.threejsRenderer = this.$refs.threejsRenderer;
     
     // Auto-import the FP3D-00-07.svg file on page load with a small delay
@@ -188,13 +187,13 @@ export default {
       this.autoImportSvg();
     }, 500);
     
-    // Set up a watcher to sync documents from Konva renderer's store
-    this.$watch(() => this.konvaRenderer?.konvaStore?.documents || {}, (newDocs) => {
+    // Set up a watcher to sync documents from SVG renderer's store
+    this.$watch(() => this.svgRenderer?.svgStore?.documents || {}, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
   },
   methods: {
-    // Simple document management methods that sync with Konva store
+    // Simple document management methods that sync with SVG store
     addDocument(doc_id, name, configs) {
       // Check if document already exists to prevent duplication
       if (this.documents[doc_id]) {
@@ -202,19 +201,19 @@ export default {
         return;
       }
       
-      // Add to konva renderer's store if available
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.addDocument(doc_id, name, configs);
+      // Add to SVG renderer's store if available
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.addDocument(doc_id, name, configs);
       }
       
       // Sync to local storage for easy access
-      this.syncDocumentsFromKonvaRenderer();
+      this.syncDocumentsFromSvgRenderer();
     },
 
-    syncDocumentsFromKonvaRenderer() {
-      // Sync the Konva renderer store documents to local reactive data
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.documents = { ...this.konvaRenderer.konvaStore.documents };
+    syncDocumentsFromSvgRenderer() {
+      // Sync the SVG renderer store documents to local reactive data
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.documents = { ...this.svgRenderer.svgStore.documents };
       }
     },
 
@@ -242,11 +241,11 @@ export default {
     },
 
     setDocumentActive(doc_id) {
-      // Use konva renderer's store to set document active
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.setDocumentActive(doc_id);
+      // Use SVG renderer's store to set document active
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.setDocumentActive(doc_id);
       }
-      this.syncDocumentsFromKonvaRenderer();
+      this.syncDocumentsFromSvgRenderer();
       
       // Directly generate and render SVG for vector documents
       const activeDoc = this.documents[doc_id];
@@ -257,28 +256,28 @@ export default {
     },
 
     toggleDocumentSelected(documentId) {
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.toggleDocumentSelected(documentId);
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.toggleDocumentSelected(documentId);
       }
-      this.syncDocumentsFromKonvaRenderer();
+      this.syncDocumentsFromSvgRenderer();
     },
 
     getBaseLayer() {
-      // Access baseLayer through the KonvaRenderer component
-      return this.konvaRenderer?.konvaStore?.baseLayer || null;
+      // No longer needed with SVG-only approach, but kept for compatibility
+      return null;
     },
 
     clearAllDocuments() {
-      // Clear konva renderer store documents
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.clearAllDocuments();
+      // Clear SVG renderer store documents
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.clearAllDocuments();
       }
-      this.syncDocumentsFromKonvaRenderer();
+      this.syncDocumentsFromSvgRenderer();
     },
 
     // Extract shared logic for processing vector documents
     async processVectorDocuments(sortedVectorDocs, successMessage) {
-      // Process vector documents (rooms and walls)
+      // Process vector documents (rooms and walls) - no Konva layers needed
       for (let doc of sortedVectorDocs) {
         // Check if document with this ID already exists (prevents duplication)
         if (this.documents[doc.id]) {
@@ -286,23 +285,18 @@ export default {
           continue;
         }
         
-        // Ensure baseLayer exists before using it
-        const baseLayer = this.getBaseLayer();
-        if (!baseLayer) {
-          console.error('Konva baseLayer not initialized. Cannot import vector documents.');
-          this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
-          return;
-        }
-
-        const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
-        baseLayer.add(layerKonva);
-        
-        // Add the document to the store with the processed order
+        // Add the document to the store with SVG objects instead of Konva objects
         this.addDocument(doc.id, doc.name, {
           ...doc,
           ui: {
             ...doc.ui,
             order: doc.ui.order // Use the order assigned by the parser
+          },
+          // Store the SVG objects directly for later processing
+          svg: {
+            objects: doc.konva?.objects || {}, // Use existing objects data
+            path: '',
+            polyline: ''
           }
         });
       }
@@ -422,11 +416,11 @@ export default {
       }
     },
 
-    // Method to generate SVG from Konva objects and render to 3D scene
+    // Method to generate SVG from objects and render to 3D scene
     generateAndRenderSvg(documentId) {
       const doc = this.getDocument(documentId);
-      if (!doc || !doc.konva || !doc.konva.objects) {
-        console.warn(`Document ${documentId} not found or has no Konva objects`);
+      if (!doc || !doc.svg || !doc.svg.objects) {
+        console.warn(`Document ${documentId} not found or has no SVG objects`);
         return;
       }
 
@@ -435,7 +429,7 @@ export default {
         return;
       }
 
-      const objects = doc.konva.objects;
+      const objects = doc.svg.objects;
       const svgMode = doc.docConfigs.svg.mode.value;
       const svg = toSvg(objects, svgMode);
       
@@ -475,14 +469,14 @@ export default {
     },
 
     setSvgPath(documentId, svg) {
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.setSvgPath(documentId, svg);
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.setSvgPath(documentId, svg);
       }
     },
 
     setSvgPolyline(documentId, svg) {
-      if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
-        this.konvaRenderer.konvaStore.setSvgPolyline(documentId, svg);
+      if (this.svgRenderer && this.svgRenderer.svgStore) {
+        this.svgRenderer.svgStore.setSvgPolyline(documentId, svg);
       }
     },
   },

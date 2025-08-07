@@ -229,12 +229,12 @@
 </template>
 
 <script>
-import { useKonvaStore } from "~/store/konva-store";
+import { useSvgStore } from "~/store/svg-store";
 
 export default {
   data() {
     return {
-      konvaStore: useKonvaStore(),
+      svgStore: useSvgStore(),
       isPanelCollapsed: false,
       renameDialogVisible: false,
       newLayerName: '',
@@ -244,15 +244,15 @@ export default {
   computed: {
     areAllDocumentsInvisible() {
       // Consider a document invisible if its opacity is 0
-      return Object.values(this.konvaStore.documents).every(doc => 
-        !doc.konva.layer || doc.docConfigs.layer.opacity.value === 0
+      return Object.values(this.svgStore.documents).every(doc => 
+        doc.docConfigs.layer.opacity.value === 0
       );
     },
     
     // Get sorted documents for display
     sortedDocuments() {
       // Create a copy of documents object as array with id included
-      return Object.entries(this.konvaStore.documents)
+      return Object.entries(this.svgStore.documents)
         .filter(([id, doc]) => {
           // Filter out documents with names "grid" or "selection"
           return !["grid", "selection"].includes(doc.name.toLowerCase());
@@ -265,10 +265,10 @@ export default {
     }
   },
   mounted() {
-    // Listen for clicks on the konva container to close menus
+    // Listen for clicks on the svg container to close menus
     document.addEventListener('click', this.handleOutsideClick);
     
-    // Listen for the custom close-v-menus event from konva.js
+    // Listen for the custom close-v-menus event from svg renderer
     document.addEventListener('close-v-menus', this.closeAllMenus);
   },
   beforeUnmount() {
@@ -278,18 +278,18 @@ export default {
   },
   methods: {
     handleOutsideClick(event) {
-      // Check if the click was on konva container
-      const konvaContainer = document.getElementById('konva-container');
-      if (konvaContainer && konvaContainer.contains(event.target)) {
+      // Check if the click was on svg container
+      const svgContainer = document.getElementById('svg-container');
+      if (svgContainer && svgContainer.contains(event.target)) {
         this.closeAllMenus();
       }
     },
     
     closeAllMenus() {
       // Close all open menus
-      for (const docId in this.konvaStore.documents) {
-        if (this.konvaStore.documents[docId].ui.menuOpen) {
-          this.konvaStore.documents[docId].ui.menuOpen = false;
+      for (const docId in this.svgStore.documents) {
+        if (this.svgStore.documents[docId].ui.menuOpen) {
+          this.svgStore.documents[docId].ui.menuOpen = false;
         }
       }
     },
@@ -302,37 +302,41 @@ export default {
     },
     
     selectDocument(documentId) {
-      const doc = this.konvaStore.documents[documentId];
+      const doc = this.svgStore.documents[documentId];
       if (doc.disabled) return;
       
       // Set the document as active
-      this.konvaStore.setDocumentActive(documentId);
+      this.svgStore.setDocumentActive(documentId);
     },
     
     moveDocumentUp(documentId) {
-      this.konvaStore.moveDocumentUp(documentId);
+      // Note: moveDocumentUp method needs to be implemented in svg-store if needed
+      console.log('moveDocumentUp not implemented in svg-store');
     },
     
     moveDocumentDown(documentId) {
-      this.konvaStore.moveDocumentDown(documentId);
+      // Note: moveDocumentDown method needs to be implemented in svg-store if needed
+      console.log('moveDocumentDown not implemented in svg-store');
     },
     
     cloneDocument(documentId) {
-      this.konvaStore.cloneDocument(documentId);
+      // Note: cloneDocument method needs to be implemented in svg-store if needed
+      console.log('cloneDocument not implemented in svg-store');
     },
     
     deleteDocument(documentId) {
-      this.konvaStore.deleteDocument(documentId);
+      // Note: deleteDocument method needs to be implemented in svg-store if needed
+      console.log('deleteDocument not implemented in svg-store');
     },
     
     isFirstDocument(doc) {
       // Check if this document has the lowest order value
-      return doc.ui.order === Math.min(...Object.values(this.konvaStore.documents).map(d => d.ui.order));
+      return doc.ui.order === Math.min(...Object.values(this.svgStore.documents).map(d => d.ui.order));
     },
     
     isLastDocument(doc) {
       // Check if this document has the highest order value
-      return doc.ui.order === Math.max(...Object.values(this.konvaStore.documents).map(d => d.ui.order));
+      return doc.ui.order === Math.max(...Object.values(this.svgStore.documents).map(d => d.ui.order));
     },
     
     openRenameDialog(doc) {
@@ -345,7 +349,8 @@ export default {
     
     confirmRename() {
       if (this.documentToRename && this.newLayerName.trim()) {
-        this.konvaStore.renameDocument(this.documentToRename.id, this.newLayerName.trim());
+        // Note: renameDocument method needs to be implemented in svg-store if needed
+        console.log('renameDocument not implemented in svg-store');
         
         // Close the dialog
         this.cancelRename();
@@ -363,14 +368,15 @@ export default {
     },
     
     updateDocumentOpacity(documentId) {
-      const doc = this.konvaStore.documents[documentId];
-      if (doc && doc.konva.layer) {
-        this.konvaStore.updateDocumentLayerOpacity(documentId, doc.docConfigs.layer.opacity.value);
+      const doc = this.svgStore.documents[documentId];
+      if (doc) {
+        // Note: updateDocumentLayerOpacity method needs to be implemented in svg-store if needed
+        console.log('updateDocumentLayerOpacity not implemented in svg-store');
       }
     },
 
     toggleDocumentSelected(documentId) {
-      const doc = this.konvaStore.documents[documentId];
+      const doc = this.svgStore.documents[documentId];
       if (doc.disabled) return;
       
       // Toggle selected state
@@ -379,7 +385,7 @@ export default {
     
     toggle3DVisibility(documentId) {
       console.log("toggle3DVisibility started for document:", documentId);
-      const doc = this.konvaStore.documents[documentId];
+      const doc = this.svgStore.documents[documentId];
       if (doc.disabled) return;
       
       // Toggle the show3D property directly in the document
@@ -387,10 +393,12 @@ export default {
 
       console.log("toggle3DVisibility doc:", JSON.parse(JSON.stringify(doc)) );
 
-      for(let obj of doc.threejsContent.objects) {
-        console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)) );
-        obj.visible = doc.show3D;
-      }   
+      if (doc.threejsContent && doc.threejsContent.objects) {
+        for(let obj of doc.threejsContent.objects) {
+          console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)) );
+          obj.visible = doc.show3D;
+        }   
+      }
 
     }
   }
