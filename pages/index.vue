@@ -204,26 +204,6 @@ export default {
     this.$watch(() => this.$konvaStore.documents, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
-
-    // Set up a watcher for konvaObjects to generate SVG and directly render to scene
-    this.$watch(() => this.konvaObjects, (objects) => {
-      const doc = this.$konvaStore.getActiveDocument();
-      const doc_id = doc?.id;
-      
-      if (!doc_id || !doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) return;
-      
-      const svg = toSvg(objects, doc.docConfigs.svg.mode.value);
-      
-      // Update the document's SVG content based on mode
-      if (doc.docConfigs.svg.mode.value === "path") {
-        this.$konvaStore.setSvgPath(doc_id, svg);
-      } else {
-        this.$konvaStore.setSvgPolyline(doc_id, svg);
-      }
-      
-      // Directly render to 3D scene without console store
-      this.renderDocumentToScene(doc_id, svg);
-    }, { deep: true, immediate: false });
   },
   computed: {
     $konvaStore() {
@@ -231,13 +211,6 @@ export default {
     },
     $eventBus() {
       return useEventBusStore();
-    },
-    // Computed property for active document's Konva objects
-    konvaObjects() {
-      const activeDocument = this.$konvaStore.getActiveDocument();
-      if (!activeDocument) return {};
-      if (!activeDocument.konva || !activeDocument.konva.objects) return {};
-      return activeDocument.konva.objects;
     },
   },
   methods: {
@@ -302,16 +275,11 @@ export default {
       this.$konvaStore.setDocumentActive(doc_id);
       this.syncDocumentsFromStore();
       
-      // Trigger SVG rendering to 3D scene
+      // Directly generate and render SVG for vector documents
       const activeDoc = this.documents[doc_id];
       if (activeDoc && activeDoc.metadata.category === "vector") {
-        // Get the appropriate SVG content based on the document's SVG mode
-        const svgMode = activeDoc.docConfigs?.svg?.mode?.value || "path";
-        const svgContent = svgMode === "path" ? activeDoc.svgPath : activeDoc.svgPolyline;
-        
-        if (svgContent) {
-          this.renderDocumentToScene(doc_id, svgContent);
-        }
+        // Use the new direct method to generate and render SVG
+        this.generateAndRenderSvg(doc_id);
       }
     },
 
@@ -405,13 +373,13 @@ export default {
         } 
 
         setTimeout(() => {
-          // Sequentially set each vector document as active, to trigger renderSvgToScene
+          // Sequentially set each vector document as active and generate SVG
           for(let docKey in this.documents) {
             let doc = this.documents[docKey];
             if(doc.metadata.category === "vector") {
               setTimeout(() => {
-                this.setDocumentActive(doc.id);
-              }, 5)
+                this.setDocumentActive(docKey);
+              }, 10);
             }
           }          
         }, 100);
@@ -475,13 +443,13 @@ export default {
           }   
 
           setTimeout(() => {
-            // Sequentially set each vector document as active, to trigger renderSvgToScene
+            // Sequentially set each vector document as active and generate SVG
             for(let docKey in this.documents) {
               let doc = this.documents[docKey];
               if(doc.metadata.category === "vector") {
                 setTimeout(() => {
-                  this.setDocumentActive(doc.id);
-                }, 5)
+                  this.setDocumentActive(docKey);
+                }, 10);
               }
             }          
           }, 100);
@@ -533,6 +501,46 @@ export default {
         floorplan3d.renderSvgToScene(svgContent, documentId);
       } else {
         console.warn('Cannot render to scene: floorplan3d instance or SVG content not available');
+      }
+    },
+
+    // Method to generate SVG from Konva objects and render to 3D scene
+    generateAndRenderSvg(documentId) {
+      const doc = this.$konvaStore.getDocument(documentId);
+      if (!doc || !doc.konva || !doc.konva.objects) {
+        console.warn(`Document ${documentId} not found or has no Konva objects`);
+        return;
+      }
+
+      if (!doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) {
+        console.warn(`Document ${documentId} missing SVG configuration`);
+        return;
+      }
+
+      const objects = doc.konva.objects;
+      const svgMode = doc.docConfigs.svg.mode.value;
+      const svg = toSvg(objects, svgMode);
+      
+      // Update the document's SVG content based on mode
+      if (svgMode === "path") {
+        this.$konvaStore.setSvgPath(documentId, svg);
+      } else {
+        this.$konvaStore.setSvgPolyline(documentId, svg);
+      }
+      
+      // Render to 3D scene
+      this.renderDocumentToScene(documentId, svg);
+    },
+
+    // Method to regenerate SVG for the currently active document
+    updateActiveSvg() {
+      const activeDoc = this.$konvaStore.getActiveDocument();
+      if (activeDoc && activeDoc.metadata.category === "vector") {
+        // Find the document ID from the documents object
+        const docId = Object.keys(this.documents).find(key => this.documents[key].active);
+        if (docId) {
+          this.generateAndRenderSvg(docId);
+        }
       }
     },
   },
