@@ -50,48 +50,8 @@ export default {
     }
   },
 
-  computed: {
-    svgData() {
-      return this.editStore.svgData;
-    },
-    svgMode(){
-      const activeDocument = this.$konvaStore.getActiveDocument();
-      if (!activeDocument) return "path";
-      if (!activeDocument.docConfigs || !activeDocument.docConfigs.svg || !activeDocument.docConfigs.svg.mode) return "path";
-      return activeDocument.docConfigs.svg.mode.value;
-    },
-  },
   // konvaObjects watcher logic moved to index.vue for better centralization
   methods: {    
-    /**
-     * Resets the Konva stage by removing all document layers and cleaning up objects
-     * while preserving the stage instance and utility layers (grid/selection).
-     * This provides a proper way to clear the scene.
-     */
-    resetKonva() {
-      // Get all document layers (excluding utility layers like grid and selection)
-      const docLayers = this.stage.getLayers().filter(layer => {
-        return layer !== this.$konvaStore.gridLayer && layer !== this.$konvaStore.selectionLayer;
-      });      
-      
-      // Properly destroy each document layer
-      docLayers.forEach(layer => {
-        layer.destroyChildren();
-        layer.destroy();
-      });
-      
-      // Use the new clearAllDocuments method for proper cleanup
-      this.$konvaStore.clearAllDocuments();
-
-      this.stage = null;
-
-      this.initKonvaIfNeeded();
-
-      // this.notificationStore.notify({
-      //   message: "Konva reset successfully",
-      //   type: "success",
-      // });
-    },
 
     initializeStage(containerRef, width, height) {
       const stage = new Konva.Stage({
@@ -149,36 +109,6 @@ export default {
         const { value } = this.editStore.checkboxes.find(
           (x) => x.name === "2dgrid"
         );
-      }
-    },
-    
-    resizeKonva() {
-      if (!this.stage) return;
-
-
-
-      const container = this.$refs["konva-container"];
-      if (!container) return;
-
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-
-      if (width > 0 && height > 0) {
-        this.stage.width(width);
-        this.stage.height(height);
-
-        // Update grid if visible - use debounced version
-        const { value } = this.editStore.checkboxes.find(
-          (x) => x.name === "2dgrid"
-        );
-        if (value) {
-          const gridLayer = this.konvaStore.gridLayer
-          if(!gridLayer) return;
-          
-        }
-
-        this.stage.batchDraw();
-
       }
     },
   },

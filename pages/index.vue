@@ -486,9 +486,6 @@ export default {
 
       // Use the new clearAllDocuments method instead of direct assignment
       this.clearAllDocuments();
-
-      // Use the konva-renderer's resetKonva method.
-      this.$eventBus.emit('resetKonva');
       
       this.showSnackbar('Scene reset successfully', 'success');
     },
