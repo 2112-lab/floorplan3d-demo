@@ -123,22 +123,11 @@ import KonvaRenderer from "~/components/konva-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
-import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
 import { toSvg } from "~/lib/svg";
 import Floorplan3D from "~/lib/Floorplan3D";
 import SvgDocumentParser from "~/lib/svg-document-parser";
-
-// Utility function for safe deep cloning
-const safeDeepClone = (obj) => {
-  try {
-    return cloneDeep(obj);
-  } catch (error) {
-    console.warn('Deep clone failed, falling back to shallow copy:', error);
-    return { ...obj };
-  }
-};
 
 export default {
   components: {
@@ -203,11 +192,6 @@ export default {
     this.$watch(() => this.konvaRenderer?.konvaStore?.documents || {}, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
-  },
-  computed: {
-    $eventBus() {
-      return useEventBusStore();
-    },
   },
   methods: {
     // Simple document management methods that sync with Konva store
@@ -366,14 +350,11 @@ export default {
           baseLayer.add(layerKonva);
           layersToCenter.push(layerKonva);
           
-          // Create a proper deep copy with independent properties            
-          const docCopy = safeDeepClone(doc);
-          
           // Add the document to the store with the processed order
           this.addDocument(doc.id, doc.name, {
-            ...docCopy,
+            ...doc,
             ui: {
-              ...docCopy.ui,
+              ...doc.ui,
               order: doc.ui.order // Use the order assigned by the parser
             }
           });
@@ -437,14 +418,11 @@ export default {
             baseLayer.add(layerKonva);
             layersToCenter.push(layerKonva);
             
-            // Create a proper deep copy with independent properties            
-            const docCopy = safeDeepClone(doc);
-            
             // Add the document to the store with the processed order
             this.addDocument(doc.id, doc.name, {
-              ...docCopy,
+              ...doc,
               ui: {
-                ...docCopy.ui,
+                ...doc.ui,
                 order: doc.ui.order // Use the order assigned by the parser
               }
             });
