@@ -7,10 +7,7 @@
 <script>
 import * as THREE from "three";
 import Floorplan3D from "~/lib/Floorplan3D";
-// import Floorplan3D from "@2112-lab/floorplan3d";
-import { useEditStore } from "~/store/edit";
 import { useThreeStore } from "~/store/three-store";
-import { useConsoleStore } from "~/store/console-store";
 import { useSvgStore } from "~/store/svg-store";
 
 export default {
@@ -23,9 +20,7 @@ export default {
   data() {
     return {
       threestore: useThreeStore(),
-      editStore: useEditStore(),
       svgStore: useSvgStore(),
-      consoleStore: useConsoleStore(),
       verticalPosition: 0,
     };
   },
@@ -47,9 +42,6 @@ export default {
       
       return null;
     },
-    gridEnabled3d(){
-          return this.editStore.checkboxes.find((checkbox) => checkbox.name === "3dgrid")?.value 
-    }
   },
   mounted() {
     this.resizeObserver = new ResizeObserver(() => {
@@ -86,22 +78,6 @@ export default {
         this.resizeThreeJs();
       },
       immediate: true,
-    },
-    "gridEnabled3d": {
-      async handler(enabled) {
-        if(enabled){
-          await this.$nextTick();
-          this.initGridHelper();
-        } else {
-          const gridHelper = this.floorplan3d.scene.getObjectByName("GridHelper");
-          if (gridHelper) {
-            this.floorplan3d.scene.remove(gridHelper);
-            gridHelper.geometry.dispose();
-            gridHelper.material.dispose();
-          }
-        }
-      },
-      immediate: false,
     },
   },
   methods: {

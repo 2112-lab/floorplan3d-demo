@@ -385,12 +385,6 @@ export default {
         return;
       }
 
-      // Clear Three.js content group
-      if (this.threestore.scene) {
-        const contentGroup = this.threestore.scene.getObjectByName("contentGroup");
-        this.threestore.floorplan3d.clearScene(contentGroup);
-      }
-
       // Use the new clearAllDocuments method instead of direct assignment
       this.clearAllDocuments();
       
@@ -406,7 +400,7 @@ export default {
     // Method to render SVG to the 3D scene
     renderDocumentToScene(documentId, svgContent) {
       // Access the floorplan3d instance through the threejs renderer
-      const floorplan3d = this.threejsRenderer?.floorplan3d || this.threestore?.floorplan3d;
+      const floorplan3d = this.threejsRenderer?.floorplan3d;
       
       if (floorplan3d && svgContent) {
         console.log(`Rendering document ${documentId} to 3D scene`);
