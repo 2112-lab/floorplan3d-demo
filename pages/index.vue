@@ -124,7 +124,6 @@ import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { useKonvaStore } from "~/store/konva-store";
-import { useConsoleStore } from "~/store/console-store";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
@@ -206,14 +205,7 @@ export default {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
 
-    // Set up a watcher for console store SVG output to trigger 3D rendering
-    this.$watch(() => this.$consoleStore.consoleOutput, (newSvg) => {
-      if (newSvg && this.$consoleStore.documentId) {
-        this.renderDocumentToScene(this.$consoleStore.documentId, newSvg);
-      }
-    }, { immediate: false });
-
-    // Set up a watcher for konvaObjects to generate SVG and update console store
+    // Set up a watcher for konvaObjects to generate SVG and directly render to scene
     this.$watch(() => this.konvaObjects, (objects) => {
       const doc = this.$konvaStore.getActiveDocument();
       const doc_id = doc?.id;
@@ -229,19 +221,13 @@ export default {
         this.$konvaStore.setSvgPolyline(doc_id, svg);
       }
       
-      // Get the current document ID
-      const currentDocument = this.$konvaStore.getActiveDocument();
-      const documentId = currentDocument ? currentDocument.id : null;
-
-      this.$consoleStore.setConsoleOutput(svg, documentId);
+      // Directly render to 3D scene without console store
+      this.renderDocumentToScene(doc_id, svg);
     }, { deep: true, immediate: false });
   },
   computed: {
     $konvaStore() {
       return useKonvaStore();
-    },
-    $consoleStore() {
-      return useConsoleStore();
     },
     $eventBus() {
       return useEventBusStore();
