@@ -140,19 +140,7 @@ export default {
     // "$konvaStore.activeDocumentId": function() {
     //   this.renderActiveDocument();
     // },
-    "$consoleStore.consoleOutput": function(newSvg) {
-      if (newSvg && this.floorplan3d) {
-        // Get the document ID directly from the console store
-        const documentId = this.$consoleStore.documentId;
-        
-        // Pass document ID to renderSvgToScene for proper group naming
-        this.floorplan3d.renderSvgToScene(
-          newSvg, 
-          documentId
-        );
-        // this.floorplan3d.renderScene();
-      }
-    }
+    // SVG rendering is now handled in index.vue when documents are activated
   },
   methods: {
     initThreeJs() {

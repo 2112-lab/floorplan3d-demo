@@ -124,6 +124,7 @@ import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
 import { useKonvaStore } from "~/store/konva-store";
+import { useConsoleStore } from "~/store/console-store";
 import { useEventBusStore } from "~/store/event-bus";
 import { cloneDeep } from 'lodash';
 import Konva from "konva";
@@ -203,10 +204,20 @@ export default {
     this.$watch(() => this.$konvaStore.documents, (newDocs) => {
       this.documents = { ...newDocs };
     }, { deep: true, immediate: true });
+
+    // Set up a watcher for console store SVG output to trigger 3D rendering
+    this.$watch(() => this.$consoleStore.consoleOutput, (newSvg) => {
+      if (newSvg && this.$consoleStore.documentId) {
+        this.renderDocumentToScene(this.$consoleStore.documentId, newSvg);
+      }
+    }, { immediate: false });
   },
   computed: {
     $konvaStore() {
       return useKonvaStore();
+    },
+    $consoleStore() {
+      return useConsoleStore();
     },
     $eventBus() {
       return useEventBusStore();
@@ -273,6 +284,18 @@ export default {
       // Use Konva store method and sync
       this.$konvaStore.setDocumentActive(doc_id);
       this.syncDocumentsFromStore();
+      
+      // Trigger SVG rendering to 3D scene
+      const activeDoc = this.documents[doc_id];
+      if (activeDoc && activeDoc.metadata.category === "vector") {
+        // Get the appropriate SVG content based on the document's SVG mode
+        const svgMode = activeDoc.docConfigs?.svg?.mode?.value || "path";
+        const svgContent = svgMode === "path" ? activeDoc.svgPath : activeDoc.svgPolyline;
+        
+        if (svgContent) {
+          this.renderDocumentToScene(doc_id, svgContent);
+        }
+      }
     },
 
     toggleDocumentSelected(documentId) {
@@ -481,6 +504,19 @@ export default {
       this.snackbar.text = text;
       this.snackbar.color = color;
       this.snackbar.show = true;
+    },
+
+    // Method to render SVG to the 3D scene
+    renderDocumentToScene(documentId, svgContent) {
+      // Access the floorplan3d instance through the threejs renderer
+      const floorplan3d = this.threejsRenderer?.floorplan3d || this.threestore?.floorplan3d;
+      
+      if (floorplan3d && svgContent) {
+        console.log(`Rendering document ${documentId} to 3D scene`);
+        floorplan3d.renderSvgToScene(svgContent, documentId);
+      } else {
+        console.warn('Cannot render to scene: floorplan3d instance or SVG content not available');
+      }
     },
   },
 };
