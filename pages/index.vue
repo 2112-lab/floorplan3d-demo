@@ -336,7 +336,7 @@ export default {
         }
         
         // Fetch the SVG file from the public directory
-        const response = await fetch('/floorplan-import-samples/FP3D-00-07.svg');
+        const response = await fetch('/inkscape-samples/FP3D-00-07.svg');
         if (!response.ok) {
           throw new Error(`Failed to fetch SVG file: ${response.status}`);
         }
