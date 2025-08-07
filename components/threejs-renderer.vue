@@ -186,8 +186,6 @@ export default {
     },
     cleanupThreeJs() {
       if (this.floorplan3d) {
-        // Stop animation properly
-        this.floorplan3d.stopAnimation();
 
         // Clear only the content group
         if (this.contentGroup) {
