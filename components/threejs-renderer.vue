@@ -7,7 +7,6 @@
 <script>
 import * as THREE from "three";
 import Floorplan3D from "~/lib/Floorplan3D";
-import { useThreeStore } from "~/store/three-store";
 import { useSvgStore } from "~/store/svg-store";
 
 export default {
@@ -19,7 +18,6 @@ export default {
   },
   data() {
     return {
-      threestore: useThreeStore(),
       svgStore: useSvgStore(),
       verticalPosition: 0,
     };
@@ -96,31 +94,14 @@ export default {
 
       // Initialize using Floorplan3D class
       this.floorplan3d = new Floorplan3D(rendererRef, width, height);
-      
-      // Store the floorplan3d instance in the threeStore
-      this.threestore.setFloorplan3D(this.floorplan3d);
 
       // Create a group for rendered content
       this.contentGroup = new THREE.Group();
       this.contentGroup.name = "contentGroup";
       this.floorplan3d.scene.add(this.contentGroup);
 
-      this.threestore.setScene(this.floorplan3d.scene);
-
       // Make sure the animation is running
       this.floorplan3d.startAnimation();
-
-      // Sync with store state
-      if (this.threestore.floorGroup) {
-        const floorGroup = this.threestore.floorGroup.clone();
-        floorGroup.matrixAutoUpdate = false;
-        this.contentGroup.add(floorGroup);
-      }
-      if (this.threestore.lineGroup) {
-        const lineGroup = this.threestore.lineGroup.clone();
-        lineGroup.matrixAutoUpdate = false;
-        this.contentGroup.add(lineGroup);
-      }
     },
     cleanupThreeJs() {
       if (this.floorplan3d) {
