@@ -104,16 +104,6 @@ export const useSvgStore = defineStore("svg", {
   },
 
   actions: {
-    // Backward compatibility methods (no-op for Konva-specific functionality)
-    setStage(stage) {
-      // No-op: We don't use Konva stage anymore
-      console.log('setStage called but ignored (Konva dependency removed)');
-    },
-
-    setBaseLayer(layer) {
-      // No-op: We don't use Konva layers anymore
-      console.log('setBaseLayer called but ignored (Konva dependency removed)');
-    },
 
     // Document management methods
     addDocument(doc_id, name, configs) {
@@ -182,54 +172,5 @@ export const useSvgStore = defineStore("svg", {
       console.log('All documents cleared');
     },
 
-    // SVG management methods (replacing Konva object methods)
-    setSvgPath(documentId, svg) {
-      if (this.documents[documentId]) {
-        this.documents[documentId].svg.path = svg;
-        console.log(`SVG path set for document ${documentId}`);
-      }
-    },
-
-    setSvgPolyline(documentId, svg) {
-      if (this.documents[documentId]) {
-        this.documents[documentId].svg.polyline = svg;
-        console.log(`SVG polyline set for document ${documentId}`);
-      }
-    },
-
-    // Update document objects (for SVG generation)
-    updateDocumentObjects(documentId, objects) {
-      if (this.documents[documentId]) {
-        this.documents[documentId].svg.objects = objects;
-        console.log(`Objects updated for document ${documentId}`);
-      }
-    },
-
-    // Update document configuration
-    updateDocumentConfig(documentId, configPath, value) {
-      if (this.documents[documentId]) {
-        const pathArray = configPath.split('.');
-        let current = this.documents[documentId].docConfigs;
-        
-        for (let i = 0; i < pathArray.length - 1; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = {};
-          }
-          current = current[pathArray[i]];
-        }
-        
-        current[pathArray[pathArray.length - 1]] = value;
-        console.log(`Config updated for document ${documentId}: ${configPath} = ${value}`);
-      }
-    },
-
-    // Get document SVG based on mode
-    getDocumentSvg(documentId) {
-      const doc = this.documents[documentId];
-      if (!doc) return null;
-      
-      const mode = doc.docConfigs?.svg?.mode?.value || 'path';
-      return mode === 'path' ? doc.svg.path : doc.svg.polyline;
-    },
   },
 });

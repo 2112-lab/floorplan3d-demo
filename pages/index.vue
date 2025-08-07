@@ -425,13 +425,6 @@ export default {
       const svgMode = doc.docConfigs.svg.mode.value;
       const svg = toSvg(objects, svgMode);
       
-      // Update the document's SVG content based on mode
-      if (svgMode === "path") {
-        this.setSvgPath(documentId, svg);
-      } else {
-        this.setSvgPolyline(documentId, svg);
-      }
-      
       // Render to 3D scene
       this.renderDocumentToScene(documentId, svg);
     },
@@ -460,17 +453,6 @@ export default {
       };
     },
 
-    setSvgPath(documentId, svg) {
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.setSvgPath(documentId, svg);
-      }
-    },
-
-    setSvgPolyline(documentId, svg) {
-      if (this.svgRenderer && this.svgRenderer.svgStore) {
-        this.svgRenderer.svgStore.setSvgPolyline(documentId, svg);
-      }
-    },
   },
 };
 </script>
