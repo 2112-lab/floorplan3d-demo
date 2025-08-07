@@ -242,19 +242,6 @@ export default {
     },
 
     setDocumentActive(doc_id) {
-      // Deactivate all documents first
-      Object.values(this.documents).forEach(doc => {
-        doc.active = false;
-      });
-      
-      // Activate the specified document
-      if (this.documents[doc_id]) {
-        this.documents[doc_id].active = true;
-        console.log(`Document ${doc_id} set as active`);
-      }
-    },
-
-    setDocumentActive(doc_id) {
       // Use konva renderer's store to set document active
       if (this.konvaRenderer && this.konvaRenderer.konvaStore) {
         this.konvaRenderer.konvaStore.setDocumentActive(doc_id);
@@ -276,17 +263,6 @@ export default {
       this.syncDocumentsFromKonvaRenderer();
     },
 
-    getActiveDocument() {
-      const activeDoc = Object.values(this.documents).find(doc => doc.active);
-      if (!activeDoc) return null;
-      
-      const docId = Object.keys(this.documents).find(key => this.documents[key].active);
-      return {
-        ...activeDoc,
-        id: docId
-      };
-    },
-
     getBaseLayer() {
       // Access baseLayer through the KonvaRenderer component
       return this.konvaRenderer?.konvaStore?.baseLayer || null;
@@ -298,6 +274,57 @@ export default {
         this.konvaRenderer.konvaStore.clearAllDocuments();
       }
       this.syncDocumentsFromKonvaRenderer();
+    },
+
+    // Extract shared logic for processing vector documents
+    async processVectorDocuments(sortedVectorDocs, successMessage) {
+      // Process vector documents (rooms and walls)
+      for (let doc of sortedVectorDocs) {
+        // Check if document with this ID already exists (prevents duplication)
+        if (this.documents[doc.id]) {
+          console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
+          continue;
+        }
+        
+        // Ensure baseLayer exists before using it
+        const baseLayer = this.getBaseLayer();
+        if (!baseLayer) {
+          console.error('Konva baseLayer not initialized. Cannot import vector documents.');
+          this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
+          return;
+        }
+
+        const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
+        baseLayer.add(layerKonva);
+        
+        // Add the document to the store with the processed order
+        this.addDocument(doc.id, doc.name, {
+          ...doc,
+          ui: {
+            ...doc.ui,
+            order: doc.ui.order // Use the order assigned by the parser
+          }
+        });
+      }
+
+      // Activate all vector documents after processing
+      this.activateVectorDocuments();
+      this.showSnackbar(successMessage, 'success');
+    },
+
+    // Extract shared logic for activating vector documents
+    activateVectorDocuments() {
+      setTimeout(() => {
+        // Sequentially set each vector document as active and generate SVG
+        for(let docKey in this.documents) {
+          let doc = this.documents[docKey];
+          if(doc.metadata.category === "vector") {
+            setTimeout(() => {
+              this.setDocumentActive(docKey);
+            }, 10);
+          }
+        }          
+      }, 100);
     },
 
     async autoImportSvg() {
@@ -322,57 +349,13 @@ export default {
         // Import the SVG content
         const importedData = await importer.importSvg(svgContent);
         
-        // Process the imported data using the new document parser utility
-        let layersToCenter = [];
-        
         // Sort and assign orders to vector documents using the parser utility
         const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
           SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
         );
 
-        // Process vector documents (rooms and walls)
-        for (let doc of sortedVectorDocs) {
-          // Check if document with this ID already exists (prevents duplication during hot reload)
-          if (this.documents[doc.id]) {
-            console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
-            continue;
-          }
-          
-          // Ensure baseLayer exists before using it
-          const baseLayer = this.getBaseLayer();
-          if (!baseLayer) {
-            console.error('Konva baseLayer not initialized. Cannot import vector documents.');
-            this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
-            return;
-          }
-
-          const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
-          baseLayer.add(layerKonva);
-          layersToCenter.push(layerKonva);
-          
-          // Add the document to the store with the processed order
-          this.addDocument(doc.id, doc.name, {
-            ...doc,
-            ui: {
-              ...doc.ui,
-              order: doc.ui.order // Use the order assigned by the parser
-            }
-          });
-        } 
-
-        setTimeout(() => {
-          // Sequentially set each vector document as active and generate SVG
-          for(let docKey in this.documents) {
-            let doc = this.documents[docKey];
-            if(doc.metadata.category === "vector") {
-              setTimeout(() => {
-                this.setDocumentActive(docKey);
-              }, 10);
-            }
-          }          
-        }, 100);
-        
-        this.showSnackbar('FP3D-00-07.svg imported successfully', 'success');
+        // Use the extracted method for processing
+        await this.processVectorDocuments(sortedVectorDocs, 'FP3D-00-07.svg imported successfully');
         
       } catch (error) {
         console.error("Error auto-importing SVG file:", error);
@@ -383,71 +366,23 @@ export default {
     async importFile() {
       try {
         const importer = new Floorplan3D(null, null, null);
-
-        let importedData;
-        
-        importedData = await importer.importFile();
+        const importedData = await importer.importFile();
         
         // handle svg upload
         if(importedData.type === "svg"){
-          const svgContent = await importedData.file.text();
-         
-          let layersToCenter = [];            
           // Sort and assign orders to vector documents using the parser utility
           const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
             SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
           );
 
-          // Process vector documents (rooms and walls)
-          for (let doc of sortedVectorDocs) {
-            // Check if document with this ID already exists (prevents duplication)
-            if (this.documents[doc.id]) {
-              console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
-              continue;
-            }
-            
-            // Ensure baseLayer exists before using it
-            const baseLayer = this.getBaseLayer();
-            if (!baseLayer) {
-              console.error('Konva baseLayer not initialized. Cannot import vector documents.');
-              this.showSnackbar('Konva renderer not initialized. Please try again.', 'error');
-              return;
-            }
-
-            const layerKonva = new Konva.Group({ name: doc.id, type: "vector-layer" });
-            baseLayer.add(layerKonva);
-            layersToCenter.push(layerKonva);
-            
-            // Add the document to the store with the processed order
-            this.addDocument(doc.id, doc.name, {
-              ...doc,
-              ui: {
-                ...doc.ui,
-                order: doc.ui.order // Use the order assigned by the parser
-              }
-            });
-          }   
-
-          setTimeout(() => {
-            // Sequentially set each vector document as active and generate SVG
-            for(let docKey in this.documents) {
-              let doc = this.documents[docKey];
-              if(doc.metadata.category === "vector") {
-                setTimeout(() => {
-                  this.setDocumentActive(docKey);
-                }, 10);
-              }
-            }          
-          }, 100);
-
-          this.showSnackbar('SVG file imported successfully', 'success');
+          // Use the extracted method for processing
+          await this.processVectorDocuments(sortedVectorDocs, 'SVG file imported successfully');
         }        
 
-        }catch(error){
-          console.error("Error importing file:", error);
-          this.showSnackbar(`Failed to import file: ${error.message}`, 'error');
-        }
-        
+      } catch(error) {
+        console.error("Error importing file:", error);
+        this.showSnackbar(`Failed to import file: ${error.message}`, 'error');
+      }
     },
 
     // Mock methods for the new Tools panel
