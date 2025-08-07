@@ -260,11 +260,6 @@ export default {
       this.syncDocumentsFromSvgRenderer();
     },
 
-    getBaseLayer() {
-      // No longer needed with SVG-only approach, but kept for compatibility
-      return null;
-    },
-
     clearAllDocuments() {
       // Clear SVG renderer store documents
       if (this.svgRenderer && this.svgRenderer.svgStore) {

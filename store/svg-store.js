@@ -78,11 +78,6 @@ export const useSvgStore = defineStore("svg", {
     documents: {}, // Store for document management
     activeDocumentId: null,
     selectedDocuments: new Set(),
-    // Remove Konva-specific properties but keep interface compatibility
-    stage: null, // Keep for backward compatibility (will be null)
-    baseLayer: null, // Keep for backward compatibility (will be null)
-    gridLayer: null, // Keep for backward compatibility (will be null)
-    selectionLayer: null, // Keep for backward compatibility (will be null)
   }),
 
   getters: {
