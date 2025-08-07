@@ -3,7 +3,7 @@
   <v-app id="appContainer" style="background-color:#f5f5f5;">     
     <!-- Hidden SVG renderer for dependencies (no longer uses Konva) -->
     <div style="display: none">
-      <KonvaRenderer ref="konvaRenderer" />
+      <SvgRenderer ref="svgRenderer" />
       <div ref="hiddenContainer"></div>
     </div>
 
@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import KonvaRenderer from "~/components/konva-renderer.vue";
+import SvgRenderer from "~/components/svg-renderer.vue";
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { useThreeStore } from "~/store/three-store";
@@ -130,14 +130,14 @@ import SvgDocumentParser from "~/lib/svg-document-parser";
 
 export default {
   components: {
-    KonvaRenderer,
+    SvgRenderer,
     ThreejsRenderer,
     LayersPanel
   },
     data() {
     return {
       threestore: useThreeStore(),
-      svgRenderer: null, // Renamed from konvaRenderer
+      svgRenderer: null, // Renamed from svgRenderer
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
@@ -178,7 +178,7 @@ export default {
   },
   mounted() {
     // Store references to renderers
-    this.svgRenderer = this.$refs.konvaRenderer; // Keep ref name for compatibility
+    this.svgRenderer = this.$refs.svgRenderer; // Keep ref name for compatibility
     this.threejsRenderer = this.$refs.threejsRenderer;
     
     // Auto-import the FP3D-00-07.svg file on page load with a small delay
