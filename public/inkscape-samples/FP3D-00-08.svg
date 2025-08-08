@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="211.66667mm"
+   height="143.40416mm"
+   viewBox="0 0 211.66667 143.40416"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="floorplan3d"
+     floorplan3d-floor-width="0"
+     floorplan3d-floor-length="0"
+     floorplan3d-building-bearing="0"
+     floorplan3d-building-longitude="0"
+     floorplan3d-building-altitude="0"
+     floorplan3d-building-latitude="0">
+    <g
+       id="floorplan3d-walls"
+       style="display:inline"
+       floorplan3d-walls-bb-length="0"
+       floorplan3d-walls-bb-width="0">
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;fill-opacity:1;stroke-width:0.264999"
+         d="m 188.658,14.202 5e-5,-3.5 H 203.492 v 8.26019 h -3.39344 V 14.202 Z"
+         id="path1" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;fill-opacity:1;stroke-width:0.264999"
+         d="m 152.417,82.494533 h 25.1728 v -2.45999 h 1.78603 v 2.45999 h 20.6572 V 65.54416 h -20.6572 v 4.04383 h -1.78603 v -4.01013 h -1.95451 v -1.85342 h 24.36404 V 31.944 h 3.57994 v 92.33095 h -10.33278 v -3.48693 h 6.86601 V 84.355043 h -47.64866 z"
+         id="path2" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;fill-opacity:1;stroke-width:0.264999"
+         d="M 180.3355,124.27513 V 120.634 h -17.4272 l -0.0323,3.64113 z"
+         id="path3" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;fill-opacity:1;stroke-width:0.264999"
+         d="m 149.87258,124.27493 -0.0635,-3.64113 h -15.8108 V 84.35741 h 7.87365 V 82.389 h -19.43014 v 2.0954 h 9.46637 l 0.0582,36.1494 H 117.489 v 3.64113 z"
+         id="path4" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;fill-opacity:1;stroke-width:0.264999"
+         d="m 75.208,124.13571 v -3.40693 h 4.375512 V 99.97541 h 1.971816 v 2.51406 h 9.31684 V 84.69382 h -9.36613 v 1.1338 h -1.77464 V 82.722 h 32.239212 v 1.97182 H 92.696098 v 17.69706 h 9.168952 v 7.83798 h -1.82393 v -5.81687 H 81.506038 v 16.2182 h 18.584382 v -1.13379 h 1.72533 v 1.18309 h 2.95773 v 3.59589 z"
+         id="path5" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 14.908,67.46592 v 56.66933 h 44.28527 v -3.51049 h -1.44878 v -6.5752 h -1.89455 v 6.5752 H 39.24477 v -18.55544 h 16.60517 v 2.17316 h 1.95027 V 98.614547 H 55.7385 v 2.340333 H 32.89246 v 1.00299 h 3.7891 v 18.66689 H 18.51617 v -18.61117 h 3.2876 v -1.39305 H 18.46044 V 79.3203 h 37.27588 v 9.710737 h 2.04174 V 53.425 H 55.83591 V 77.92594 H 18.43712 V 67.36862 Z"
+         id="path16" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 14.908,35.06 v 14.14175 h 3.6 V 35.06 Z"
+         id="path15" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 30.1581,10.785736 v 3.415927 H 18.408 v 7.166335 h -3.5 V 10.785 Z"
+         id="path14" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 113.34103,10.785 h 31.3589 l 0.10927,3.416663 h -11.25424 v 49.29556 h 1.63685 v 2.07024 H 80.314 v -1.92157 h 51.62216 l -0.0565,-49.44423 h -18.44681 z"
+         id="path18" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 157.52205,10.785 h 18.18014 l 0.13221,3.416662 h -11.37084 v 49.416731 h 0.79331 v 1.94907 H 145.424 v -2.01518 h 17.45143 l 0.0661,-49.350621 h -5.41949 z"
+         id="path19" />
+      <path
+         style="display:inline;mix-blend-mode:normal;fill:#000080;stroke-width:0.264999"
+         d="m 52.809,10.785 h 37.4777 l 0.10927,3.416663 H 52.809 Z"
+         id="path17" />
+    </g>
+    <g
+       id="floorplan3d-rooms"
+       style="display:inline">
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="M 18.408553,78.152463 V 14.202002 H 131.80855 V 63.646233 H 57.678618 V 53.425483 H 55.73647 v 24.82605 z"
+         id="path12" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 133.60139,14.202 h 29.20716 v 49.282683 h -29.30837 z"
+         id="path13" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 164.26671,14.202 0.0969,49.345163 h 35.53587 V 14.202002 Z"
+         id="path6" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 55.639056,100.95536 -0.0021,-21.634577 H 18.361 v 21.300237 z"
+         id="path7" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 18.361,101.97258 h 18.221114 v 18.65266 H 18.416722 Z"
+         id="path8" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 55.639056,101.97258 v 18.65266 H 39.145328 V 102.0698 h 16.605171"
+         id="path9" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 81.406586,104.71912 h 18.535081 v 15.91109 H 81.406586 Z"
+         id="path10" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="M 101.92211,120.63021 101.7656,102.52629 92.825955,102.3909 V 84.693843 l 38.982825,-0.0628 v 36.003187 z"
+         id="path11" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 134.00232,84.631043 h 66.01035 v 36.157427 l -66.43149,-0.15424 z"
+         id="path20" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 179.4019,82.389473 v -16.84486 h 20.5313 v 16.95037 H 179.276 Z"
+         id="path21" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="M 177.3858,82.494983 V 65.578313 H 57.678618 v 55.046927 h 21.805447 l 0.05601,-37.903217 z"
+         id="path22" />
+      <path
+         style="display:inline;opacity:0.271;fill:#f5f43d;fill-opacity:1;stroke-width:0.264999"
+         d="m 81.406586,84.631043 v 18.001587 h 9.267539 V 84.693843 h -9.267539"
+         id="path23" />
+    </g>
+    <g
+       id="floorplan3d-doors"
+       style="display:inline">
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 79.636261,85.82796 h 1.770666 v 14.14779 l -1.892004,-0.003 z"
+         id="path47" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="M 80.198202,63.64655 H 57.678959 v 1.93208 h 22.519243 z"
+         id="path48" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 135.25202,63.485 h 9.98822 v 2.09363 h -9.98822 z"
+         id="path49" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 165.15728,63.65606 10.37852,0.17678 v 1.74579 h -10.40753 z"
+         id="path50" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 177.38614,70.02023 h 2.0161 v 9.98822 h -2.0161 z"
+         id="path51" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 141.79299,82.57789 10.52861,0.0798 v 1.97365 h -10.52863 z"
+         id="path52" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 121.99368,84.64717 -0.005,-2.02333 -10.16028,0.0236 0.003,2.01612 z"
+         id="path53" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 99.942008,119.34811 1.969212,-0.017 -0.0776,-8.97537 h -1.891612 z"
+         id="path54" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 59.050966,124.13605 v -3.51049 l 15.956919,-0.1263 v 3.51542 z"
+         id="path55" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 55.639397,113.76814 h 2.039562 v -9.52486 H 55.75084 Z"
+         id="path56" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 55.686805,98.61535 h 2.014307 l -0.02215,-9.37757 -2.0407,2e-4 z"
+         id="path57" />
+      <path
+         style="display:inline;fill:#97c4f2;fill-opacity:1;stroke-width:0.264999"
+         d="m 21.905,101.9729 0.01184,-1.31967 10.920896,0.0979 v 1.22173 z"
+         id="path58" />
+    </g>
+    <g
+       id="floorplan3d-windows"
+       style="display:inline">
+      <path
+         id="path24"
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="M 14.808915 21.368205 L 14.808915 35.145142 L 18.30896 35.059875 L 18.30896 21.368205 L 14.808915 21.368205 z " />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 14.809,49.176023 h 3.6 v 18.16616 l -3.592208,0.12366 z"
+         id="path25" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 104.67934,120.63024 h 12.66802 l 0.0425,3.62516 H 104.6745 Z"
+         id="path26" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 149.71347,120.83748 13.09269,0.11615 v 3.32143 l -13.03503,-0.13097 z"
+         id="path27" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 180.2362,120.80049 h 12.91091 v 3.47457 H 180.2362 Z"
+         id="path28" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 203.46017,19.047683 h -3.56024 v 12.92807 l 3.5701,-0.0158 z"
+         id="path29" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 188.55905,10.806188 v 3.395472 h -12.92394 l -0.032,-3.406158 z"
+         id="path30" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 144.59781,10.785 12.82476,3.7e-5 v 3.416623 l -12.7222,2e-6 z"
+         id="path31" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="m 90.187569,10.792707 23.055871,0.04138 v 3.367577 l -23.002314,2e-6 z"
+         id="path32" />
+      <path
+         style="display:inline;fill:#b8e0b8;fill-opacity:1;stroke-width:0.264999"
+         d="M 30.0591,10.787715 H 52.709616 V 14.20166 H 30.0591 Z"
+         id="path33" />
+    </g>
+    <g
+       id="floorplan3d-components"
+       style="display:inline">
+      <g
+         id="floorplan3d-components-fans">
+        <rect
+           style="display:inline;fill:#02abff;fill-opacity:1;stroke-width:0.264999"
+           id="floorplan3d:components:sample-fan"
+           width="1"
+           height="1"
+           x="0"
+           y="0" />
+        <rect
+           style="display:inline;fill:#02abff;fill-opacity:1;stroke-width:0.264999"
+           id="rect63-13"
+           width="1"
+           height="1"
+           x="80"
+           y="36" />
+      </g>
+      <g
+         id="floorplan3d-components-thermostats">
+        <rect
+           style="display:inline;fill:#02abff;fill-opacity:1;stroke-width:0.264999"
+           id="floorplan3d:components:sample-thermostat"
+           width="1"
+           height="1"
+           x="0"
+           y="0" />
+        <rect
+           style="display:inline;fill:#02abff;fill-opacity:1;stroke-width:0.264999"
+           id="rect63-5"
+           width="1"
+           height="1"
+           x="90"
+           y="63" />
+      </g>
+      <g
+         id="floorplan3d-components-power-outlets">
+        <rect
+           style="display:none;fill:#fe0000;fill-opacity:1;stroke-width:0.264999"
+           id="floorplan3d:components:sample-power-outlet"
+           width="1"
+           height="1"
+           x="0"
+           y="0" />
+        <rect
+           style="display:inline;fill:#fe0000;fill-opacity:1;stroke-width:0.264999"
+           id="rect63-1"
+           width="1"
+           height="1"
+           x="55"
+           y="56" />
+        <rect
+           style="display:inline;fill:#fe0000;fill-opacity:1;stroke-width:0.264999"
+           id="rect12"
+           width="1"
+           height="1"
+           x="162.5"
+           y="56" />
+        <rect
+           style="display:inline;fill:#fe0000;fill-opacity:1;stroke-width:0.264999"
+           id="rect13"
+           width="1"
+           height="1"
+           x="199.5"
+           y="56" />
+      </g>
+      <g
+         id="floorplan3d-components-light-switches">
+        <rect
+           style="display:none;fill:#008000;fill-opacity:1;stroke-width:0.264999"
+           id="floorplan3d:components:sample-light-switch"
+           width="1"
+           height="1"
+           x="0"
+           y="0" />
+        <rect
+           style="display:inline;fill:#008000;fill-opacity:1;stroke-width:0.264999"
+           id="rect9"
+           width="1"
+           height="1"
+           x="55"
+           y="58" />
+        <rect
+           style="display:inline;fill:#008000;fill-opacity:1;stroke-width:0.264999"
+           id="rect8"
+           width="1"
+           height="1"
+           x="150"
+           y="63" />
+        <rect
+           style="display:inline;fill:#008000;fill-opacity:1;stroke-width:0.264999"
+           id="rect4"
+           width="1"
+           height="1"
+           x="180"
+           y="63" />
+      </g>
+      <g
+         id="floorplan3d-components-lights">
+        <rect
+           style="display:none;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="floorplan3d:components:sample-light"
+           width="1"
+           height="1"
+           x="0"
+           y="0" />
+        <rect
+           style="display:inline;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="rect63-3"
+           width="1"
+           height="1"
+           x="37"
+           y="60" />
+        <rect
+           style="display:inline;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="rect2"
+           width="1"
+           height="1"
+           x="56"
+           y="32" />
+        <rect
+           style="display:inline;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="rect3"
+           width="1"
+           height="1"
+           x="100"
+           y="40" />
+        <rect
+           style="display:inline;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="rect10"
+           width="1"
+           height="1"
+           x="150"
+           y="40" />
+        <rect
+           style="display:inline;fill:#ff02ff;fill-opacity:1;stroke-width:0.264999"
+           id="rect11"
+           width="1"
+           height="1"
+           x="180"
+           y="40" />
+      </g>
+    </g>
+  </g>
+</svg>

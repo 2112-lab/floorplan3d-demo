@@ -27,7 +27,8 @@
           @click="selectDocument(doc.id)"
         >
           <div class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center">              <!-- Checkbox for "selected" state -->
+            <div class="d-flex align-center">              
+              <!-- Checkbox for "selected" state -->
               <v-checkbox
                 v-model="doc.selected"
                 density="compact"
@@ -63,7 +64,8 @@
                 </template>
                 <span>{{ doc.metadata.category === 'vector' ? 'Vector' : 'Raster' }}</span>
               </v-tooltip>
-              <!-- Secondary icon for SVG type (path/polyline) -->              <v-tooltip v-if="doc.metadata.category === 'vector' && doc.metadata.subtype" location="top">
+              <!-- Secondary icon for SVG type (path/polyline) -->              
+               <v-tooltip v-if="doc.metadata.category === 'vector' && doc.metadata.subtype" location="top">
                 <template v-slot:activator="{ props }">
                   <v-icon 
                     size="x-small" 
