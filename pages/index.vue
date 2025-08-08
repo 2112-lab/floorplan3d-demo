@@ -468,17 +468,6 @@ export default {
         svgContent = doc.svg.polyline;
         console.log(`Using svg.polyline content for document ${documentId}`);
       } 
-      // Fallback to generating SVG from objects if available
-      else if (doc.svg && doc.svg.objects && Object.keys(doc.svg.objects).length > 0) {
-        if (!doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) {
-          console.warn(`Document ${documentId} missing SVG configuration`);
-          return;
-        }
-        const objects = doc.svg.objects;
-        const svgMode = doc.docConfigs.svg.mode.value;
-        svgContent = SvgUtils.toSvg(objects, svgMode);
-        console.log(`Generated SVG from objects for document ${documentId}`);
-      }
       
       if (!svgContent) {
         console.warn(`Document ${documentId} has no SVG content to render`);
