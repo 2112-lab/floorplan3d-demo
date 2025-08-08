@@ -76,16 +76,6 @@
                 </v-btn>
                 
                 <v-btn
-                  color="blue"
-                  @click="testSimpleSvg"
-                  block
-                  class="mb-2"
-                >
-                  <v-icon small class="mr-1">mdi-test-tube</v-icon>
-                  Test Simple SVG
-                </v-btn>
-                
-                <v-btn
                   color="red-lighten-1"
                   @click="resetScene"
                   block
@@ -418,37 +408,6 @@ export default {
       this.clearAllDocuments();
       
       this.showSnackbar('Scene reset successfully', 'success');
-    },
-
-    async testSimpleSvg() {
-      try {
-        console.log('Testing simple SVG rendering...');
-        
-        // Create a simple SVG with basic shapes
-        const testSvg = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 10 10 L 90 10 L 90 90 L 10 90 Z" fill="#ff0000" stroke="#000000" stroke-width="1"/>
-          <path d="M 20 20 L 80 20 L 80 80 L 20 80 Z" fill="#00ff00" stroke="#000000" stroke-width="1"/>
-        </svg>`;
-        
-        console.log('Test SVG:', testSvg);
-        
-        // Get the floorplan3d instance
-        const floorplan3d = this.$refs.threejsRenderer?.floorplan3d;
-        if (!floorplan3d) {
-          throw new Error('Floorplan3D instance not available');
-        }
-        
-        console.log('Floorplan3D instance found, calling renderSvgToScene...');
-        
-        // Call renderSvgToScene directly
-        await floorplan3d.renderSvgToScene(testSvg, 'test-simple');
-        
-        this.showSnackbar('Test SVG rendered successfully', 'success');
-        
-      } catch (error) {
-        console.error('Error testing simple SVG:', error);
-        this.showSnackbar(`Test failed: ${error.message}`, 'error');
-      }
     },
 
     showSnackbar(text, color = 'success') {
