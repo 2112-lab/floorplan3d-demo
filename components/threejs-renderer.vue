@@ -5,57 +5,46 @@
 </template>
 
 <script>
-import Floorplan3D from "@2112-lab/floorplan3d";
-
 export default {
+  props: {
+    // Expose the container element to parent
+    floorplan3d: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return {
-      // No longer need external store - floorplan3d manages documents internally
+      // Just a simple container component now
     };
   },
   mounted() {
-    this.initThreeJs();
+    // Emit the renderer element reference to parent for initialization
+    this.$emit('container-ready', {
+      container: this.$refs.threejsContainer,
+      renderer: this.$refs.threejsRenderer
+    });
   },
   beforeDestroy() {    
-    this.cleanupThreeJs();
+    // Cleanup will be handled by parent component
+    this.$emit('container-destroyed');
   },
   methods: {
-    initThreeJs() {
+    // Expose container dimensions to parent
+    getContainerDimensions() {
       const containerRef = this.$refs.threejsContainer;
-      const rendererRef = this.$refs.threejsRenderer;
-      if (!containerRef || !rendererRef) return;
-
-      const width = containerRef.offsetWidth;
-      const height = containerRef.offsetHeight;
-
-      // Clear any existing Three.js instance
-      if (this.floorplan3d) {
-        this.cleanupThreeJs();
-      }
-
-      // Initialize using Floorplan3D class
-      this.floorplan3d = new Floorplan3D(rendererRef, width, height);
-
-      // The floorplan3d instance now has its own internal document store
-      // No need to set up external callbacks for basic functionality
-
-      // Make sure the animation is running
-      this.floorplan3d.startAnimation();
+      if (!containerRef) return { width: 0, height: 0 };
+      
+      return {
+        width: containerRef.offsetWidth,
+        height: containerRef.offsetHeight
+      };
     },
-    cleanupThreeJs() {
-      if (this.floorplan3d) {
-
-        // Dispose of renderer
-        if (this.floorplan3d.renderer) {
-          this.floorplan3d.renderer.dispose();
-          this.floorplan3d.renderer.forceContextLoss();
-          this.floorplan3d.renderer.domElement = null;
-        }
-
-        // Clear references
-        this.floorplan3d = null;
-      }
-    },
+    
+    // Expose renderer element to parent
+    getRendererElement() {
+      return this.$refs.threejsRenderer;
+    }
   },
 };
 </script>

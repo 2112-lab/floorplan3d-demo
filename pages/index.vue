@@ -14,7 +14,13 @@
         style="position:absolute; top:20px; left:20px; right:420px; bottom:20px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12)"
       >
         <!-- ThreeJS Renderer -->
-        <ThreejsRenderer ref="threejsRenderer" class="threejs-primary" />
+        <ThreejsRenderer 
+          ref="threejsRenderer" 
+          class="threejs-primary" 
+          :floorplan3d="floorplan3d"
+          @container-ready="onContainerReady"
+          @container-destroyed="onContainerDestroyed"
+        />
         
         <!-- LayersPanel positioned in corner with padding -->
         <div style="position: absolute; top: 10px; left: 10px; z-index: 50; width: 280px;">
@@ -123,6 +129,7 @@ import LayersPanel  from "~/components/layers-panel.vue";
 import { cloneDeep } from 'lodash';
 import { SvgUtils, defaultVectorConfigs, defaultMetadata } from "@2112-lab/floorplan3d";
 import Floorplan3D, { SvgDocumentParser } from "@2112-lab/floorplan3d";
+import { markRaw } from 'vue';
 
 export default {
   components: {
@@ -131,6 +138,7 @@ export default {
   },
     data() {
     return {
+      floorplan3d: null, // Floorplan3D instance managed here now
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
@@ -153,21 +161,93 @@ export default {
     // Store references to renderers
     this.threejsRenderer = this.$refs.threejsRenderer;
     
-    // Auto-import the FP3D-00-07.svg file on page load with a small delay
-    // to ensure all components are properly initialized
-    setTimeout(() => {
-      this.autoImportSvg();
-    }, 500);
+    // Floorplan3D will be initialized when container is ready via onContainerReady event
     
     // Set up a watcher to sync layers/documents from floorplan3d instance's internal store
-    this.$watch(() => this.threejsRenderer?.floorplan3d?.layerStore?.getState() || {}, (newState) => {
+    this.$watch(() => this.floorplan3d?.layerStore?.getState() || {}, (newState) => {
       if (newState.layers) {
         this.layers = { ...newState.layers };
         this.documents = { ...newState.layers }; // Keep backward compatibility
       }
     }, { deep: true, immediate: true });
   },
+  beforeDestroy() {
+    // Cleanup Floorplan3D instance when component is destroyed
+    this.cleanupFloorplan3D();
+  },
   methods: {
+    // Handle container ready event from threejs-renderer
+    onContainerReady({ container, renderer }) {
+      console.log('Container ready, initializing Floorplan3D...');
+      // Add a small delay to ensure DOM is fully ready
+      this.$nextTick(() => {
+        this.initFloorplan3D(container, renderer);
+      });
+    },
+
+    // Handle container destroyed event from threejs-renderer  
+    onContainerDestroyed() {
+      console.log('Container destroyed, cleaning up Floorplan3D...');
+      this.cleanupFloorplan3D();
+    },
+
+    // Initialize Floorplan3D instance
+    initFloorplan3D(containerRef, rendererRef) {
+      // Ensure we're on the client side
+      if (process.server) {
+        console.warn('Attempting to initialize Floorplan3D on server side, skipping');
+        return;
+      }
+
+      if (!containerRef || !rendererRef) {
+        console.error('Container or renderer ref not available');
+        return;
+      }
+
+      const width = containerRef.offsetWidth;
+      const height = containerRef.offsetHeight;
+
+      // Clear any existing Three.js instance
+      if (this.floorplan3d) {
+        this.cleanupFloorplan3D();
+      }
+
+      try {
+        // Initialize using Floorplan3D class and mark as raw to prevent Vue reactivity
+        this.floorplan3d = markRaw(new Floorplan3D(rendererRef, width, height));
+
+        // The floorplan3d instance now has its own internal document store
+        // No need to set up external callbacks for basic functionality
+
+        // Make sure the animation is running
+        this.floorplan3d.startAnimation();
+
+        // Auto-import the FP3D-00-08.svg file after initialization
+        setTimeout(() => {
+          this.autoImportSvg();
+        }, 500);
+
+        console.log('Floorplan3D initialized successfully');
+      } catch (error) {
+        console.error('Error initializing Floorplan3D:', error);
+      }
+    },
+
+    // Cleanup Floorplan3D instance
+    cleanupFloorplan3D() {
+      if (this.floorplan3d) {
+        // Dispose of renderer
+        if (this.floorplan3d.renderer) {
+          this.floorplan3d.renderer.dispose();
+          this.floorplan3d.renderer.forceContextLoss();
+          this.floorplan3d.renderer.domElement = null;
+        }
+
+        // Clear references
+        this.floorplan3d = null;
+      }
+    },
+
     // Layer management methods - New API
     addLayer(layerId, name, configs) {
       // Check if layer already exists to prevent duplication
@@ -177,8 +257,8 @@ export default {
       }
       
       // Add to floorplan3d's internal store if available
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.addLayer(layerId, name, configs);
+      if (this.floorplan3d) {
+        this.floorplan3d.addLayer(layerId, name, configs);
       }
       
       // Sync to local storage for easy access
@@ -187,38 +267,38 @@ export default {
 
     syncLayersFromFloorplan3d() {
       // Sync the floorplan3d internal store layers to local reactive data
-      if (this.threejsRenderer?.floorplan3d?.layerStore) {
-        this.layers = { ...this.threejsRenderer.floorplan3d.layerStore.layers };
+      if (this.floorplan3d?.layerStore) {
+        this.layers = { ...this.floorplan3d.layerStore.layers };
         this.documents = { ...this.layers }; // Keep backward compatibility
       }
     },
 
     setLayerActive(layerId) {
       // Use floorplan3d's internal store to set layer active
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.setLayerActive(layerId);
+      if (this.floorplan3d) {
+        this.floorplan3d.setLayerActive(layerId);
       }
       this.syncLayersFromFloorplan3d();
     },
 
     toggleLayerSelected(layerId) {
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.toggleLayerSelected(layerId);
+      if (this.floorplan3d) {
+        this.floorplan3d.toggleLayerSelected(layerId);
       }
       this.syncLayersFromFloorplan3d();
     },
 
     clearAllLayers() {
       // Clear floorplan3d internal store layers
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.clearAllLayers();
+      if (this.floorplan3d) {
+        this.floorplan3d.clearAllLayers();
       }
       this.syncLayersFromFloorplan3d();
     },
 
     activateVectorLayers() {
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.activateVectorLayers();
+      if (this.floorplan3d) {
+        this.floorplan3d.activateVectorLayers();
       }
     },
 
@@ -318,6 +398,11 @@ export default {
     },
 
     async autoImportSvg() {
+      // Ensure we're on the client side
+      if (process.server) {
+        return;
+      }
+
       try {
         // Check if layers already exist (prevents duplication during hot reload)
         if (Object.keys(this.layers).length > 0) {
@@ -337,8 +422,8 @@ export default {
         console.log('SVG content fetched, length:', svgContent.length);
         
         // Use floorplan3d's comprehensive import method
-        if (this.threejsRenderer?.floorplan3d) {
-          const result = await this.threejsRenderer.floorplan3d.importAndStoreDocuments(svgContent);
+        if (this.floorplan3d) {
+          const result = await this.floorplan3d.importAndStoreDocuments(svgContent);
           console.log('SVG import completed:', result);
           
           this.syncLayersFromFloorplan3d();
@@ -355,11 +440,11 @@ export default {
 
     async importFile() {
       try {
-        if (!this.threejsRenderer?.floorplan3d) {
+        if (!this.floorplan3d) {
           throw new Error('Floorplan3D instance not available');
         }
         
-        const result = await this.threejsRenderer.floorplan3d.importFileWithStorage();
+        const result = await this.floorplan3d.importFileWithStorage();
         
         // handle svg upload
         if(result.type === "svg"){
@@ -396,12 +481,10 @@ export default {
 
     // Method to render SVG to the 3D scene (updated for layers)
     renderLayerToScene(layerId, svgContent) {
-      // Access the floorplan3d instance through the threejs renderer
-      const floorplan3d = this.threejsRenderer?.floorplan3d;
-      
-      if (floorplan3d && svgContent) {
+      // Access the floorplan3d instance directly
+      if (this.floorplan3d && svgContent) {
         console.log(`Rendering layer ${layerId} to 3D scene`);
-        floorplan3d.renderSvgToScene(svgContent, layerId);
+        this.floorplan3d.renderSvgToScene(svgContent, layerId);
       } else {
         console.warn('Cannot render to scene: floorplan3d instance or SVG content not available');
       }
@@ -414,8 +497,8 @@ export default {
 
     // Method to generate SVG from objects and render to 3D scene (updated for layers)
     generateAndRenderSvg(layerId) {
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.generateAndRenderSvg(layerId);
+      if (this.floorplan3d) {
+        this.floorplan3d.generateAndRenderSvg(layerId);
       }
     },
 
