@@ -121,9 +121,8 @@
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { cloneDeep } from 'lodash';
-import { toSvg } from "~/lib/svg";
-import Floorplan3D from "~/lib/Floorplan3D";
-import SvgDocumentParser from "~/lib/svg-document-parser";
+import { SvgUtils } from "@2112-lab/floorplan3d";
+import Floorplan3D, { SvgDocumentParser } from "@2112-lab/floorplan3d";
 import { useSvgStore } from "~/store/svg-store";
 
 export default {
@@ -415,7 +414,7 @@ export default {
 
       const objects = doc.svg.objects;
       const svgMode = doc.docConfigs.svg.mode.value;
-      const svg = toSvg(objects, svgMode);
+      const svg = SvgUtils.toSvg(objects, svgMode);
       
       // Render to 3D scene
       this.renderDocumentToScene(documentId, svg);

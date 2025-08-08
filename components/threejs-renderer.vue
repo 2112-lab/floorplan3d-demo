@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Floorplan3D from "~/lib/Floorplan3D";
+import Floorplan3D from "@2112-lab/floorplan3d";
 import { useSvgStore } from "~/store/svg-store";
 
 export default {
@@ -36,6 +36,16 @@ export default {
 
       // Initialize using Floorplan3D class
       this.floorplan3d = new Floorplan3D(rendererRef, width, height);
+
+      // Set up callbacks for Nuxt-specific functionality
+      this.floorplan3d.setCallbacks({
+        getSvgStore: () => this.svgStore,
+        getRuntimeConfig: () => useRuntimeConfig(),
+        getDefaultConfigs: () => ({
+          vector: this.svgStore.defaultVectorConfigs,
+          raster: this.svgStore.defaultRasterConfigs
+        })
+      });
 
       // Make sure the animation is running
       this.floorplan3d.startAnimation();
@@ -90,10 +100,10 @@ export default {
 }
 
 .slider-value-container {
-  /* height: 50px; */
+  height: 50px;
 }
 
 .vertical-slider-height {
-  /* height: 25%; */
+  height: 25%;
 }
 </style>

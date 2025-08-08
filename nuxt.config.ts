@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import WebpackObfuscator from 'webpack-obfuscator'
+import path from 'path'
 
 export default defineNuxtConfig({
   ssr: false,
@@ -35,6 +36,11 @@ export default defineNuxtConfig({
         transformAssetUrls,
       },
     },
+    resolve: {
+      alias: process.env.LOCAL_DEV === 'true' ? {
+        '@2112-lab/floorplan3d': path.resolve(__dirname, 'floorplan3d/src/index.js')
+      } : {}
+    }
   },
   // Webpack Configuration for Code Obfuscation
   webpack: {
