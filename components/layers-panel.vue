@@ -99,24 +99,47 @@
               style="background-color: #f8f9fa; border-top: 1px solid #e9ecef;"
             >
 
-              <!-- Extrusion Height Slider -->
-              <div v-if="layer.layerConfigs?.extrusion?.height" class="control-row mb-2">
+              <!-- Extrusion Start Position Slider -->
+              <div v-if="layer.layerConfigs?.extrusion?.start" class="control-row mb-2">
                 <div class="d-flex align-center justify-space-between mb-1">
-                  <span class="text-caption">Extrusion Height</span>
+                  <span class="text-caption">Extrusion Start</span>
                   <span class="text-caption text--secondary">
-                    {{ Math.round(layer.layerConfigs.extrusion.height.value) }}
+                    {{ Math.round(layer.layerConfigs.extrusion.start.value * 10) / 10 }}
                   </span>
                 </div>
                 <v-slider
-                  v-model="layer.layerConfigs.extrusion.height.value"
-                  :min="layer.layerConfigs.extrusion.height.min"
-                  :max="layer.layerConfigs.extrusion.height.max"
-                  :step="layer.layerConfigs.extrusion.height.step"
+                  v-model="layer.layerConfigs.extrusion.start.value"
+                  :min="Math.max(0, layer.layerConfigs.extrusion.start.min)"
+                  :max="layer.layerConfigs.extrusion.start.max"
+                  :step="layer.layerConfigs.extrusion.start.step"
                   :disabled="layer.disabled"
                   density="compact"
                   hide-details
                   class="control-slider"
-                  @update:model-value="updateExtrusionHeight(layer.id)"
+                  @update:model-value="updateExtrusionStart(layer.id, $event)"
+                  thumb-size="12"
+                  track-size="2"
+                ></v-slider>
+              </div>
+
+              <!-- Extrusion End Position Slider -->
+              <div v-if="layer.layerConfigs?.extrusion?.end" class="control-row mb-2">
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-caption">Extrusion End</span>
+                  <span class="text-caption text--secondary">
+                    {{ Math.round(layer.layerConfigs.extrusion.end.value * 10) / 10 }}
+                  </span>
+                </div>
+                <v-slider
+                  v-model="layer.layerConfigs.extrusion.end.value"
+                  :min="Math.max(layer.layerConfigs.extrusion.end.min, layer.layerConfigs.extrusion.start.value + 1)"
+                  :max="layer.layerConfigs.extrusion.end.max"
+                  :step="layer.layerConfigs.extrusion.end.step"
+                  :disabled="layer.disabled"
+                  density="compact"
+                  hide-details
+                  class="control-slider"
+                  @update:model-value="updateExtrusionEnd(layer.id, $event)"
                   thumb-size="12"
                   track-size="2"
                 ></v-slider>
@@ -377,17 +400,94 @@ export default {
       return !!this.expandedControls[layerId];
     },
 
-    // Methods for updating extrusion properties
-    updateExtrusionHeight(layerId) {
+    // Methods for updating extrusion properties with validation
+    updateExtrusionStart(layerId, newValue) {
       const layer = this.layers[layerId];
       if (layer && this.floorplan3d) {
-        // Use floorplan3d's updateLayerConfig method
+        // Ensure start value is never below 0
+        const clampedStart = Math.max(0, newValue);
+        
+        // If the new start value would make end too close, adjust end
+        let endValue = layer.layerConfigs.extrusion.end.value;
+        if (endValue < clampedStart + 1) {
+          endValue = clampedStart + 1;
+          // Update the end value first
+          this.floorplan3d.updateLayerConfig(
+            layerId, 
+            'layerConfigs.extrusion.end.value', 
+            endValue
+          );
+        }
+        
+        // Update the start value
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.start.value', 
+          clampedStart
+        );
+        
+        // Update derived properties
+        this.updateExtrusionDimensions(layerId);
+      }
+    },
+
+    updateExtrusionEnd(layerId, newValue) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        const startValue = layer.layerConfigs.extrusion.start.value;
+        
+        // Ensure end value is never below (start + 1)
+        const clampedEnd = Math.max(startValue + 1, newValue);
+        
+        // Update the end value
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.end.value', 
+          clampedEnd
+        );
+        
+        // Update derived properties
+        this.updateExtrusionDimensions(layerId);
+      }
+    },
+
+    // Methods for updating extrusion properties
+    updateExtrusionDimensions(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Calculate height from start and end positions
+        const start = layer.layerConfigs.extrusion.start.value;
+        const end = layer.layerConfigs.extrusion.end.value;
+        const height = Math.abs(end - start);
+        const verticalPosition = Math.min(start, end);
+        
+        // Update both height and vertical position
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.start.value', 
+          start
+        );
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.end.value', 
+          end
+        );
         this.floorplan3d.updateLayerConfig(
           layerId, 
           'layerConfigs.extrusion.height.value', 
-          layer.layerConfigs.extrusion.height.value
+          height
+        );
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.verticalPosition.value', 
+          verticalPosition
         );
       }
+    },
+
+    // Keep the old method for backward compatibility
+    updateExtrusionHeight(layerId) {
+      this.updateExtrusionDimensions(layerId);
     },
 
     updateExtrusionOpacity(layerId) {
