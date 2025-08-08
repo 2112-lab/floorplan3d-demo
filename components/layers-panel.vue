@@ -64,20 +64,6 @@
                 </template>
                 <span>{{ layer.metadata.category === 'vector' ? 'Vector' : 'Raster' }}</span>
               </v-tooltip>
-              <!-- Secondary icon for SVG type (path/polyline) -->              
-               <v-tooltip v-if="layer.metadata.category === 'vector' && layer.metadata.subtype" location="top">
-                <template v-slot:activator="{ props }">
-                  <v-icon 
-                    size="x-small" 
-                    class="ml-0" 
-                    color="blue-grey-lighten-1"
-                    v-bind="props"
-                  >
-                    {{ layer.metadata.subtype === 'paths' ? 'mdi-vector-curve' : layer.metadata.subtype === 'polylines' ? 'mdi-vector-polyline' : '' }}
-                  </v-icon>
-                </template>
-                <span>{{ layer.metadata.subtype === 'paths' ? 'Paths' : layer.metadata.subtype === 'polylines' ? 'Polylines' : '' }}</span>
-              </v-tooltip>
             </div>
             <div class="layer-controls" :class="{ 'visible': layer.ui.menuOpen }">
               <!-- Dots vertical menu -->

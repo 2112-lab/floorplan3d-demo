@@ -356,9 +356,7 @@ export default {
         
         console.log(`Processing layer ${layer.id} (${layer.name}):`, {
           hasSvgPath: !!layer.svgPath,
-          hasSvgPolyline: !!layer.svgPolyline,
           svgPathLength: layer.svgPath ? layer.svgPath.length : 0,
-          svgPolylineLength: layer.svgPolyline ? layer.svgPolyline.length : 0
         });
         
         // Add the layer to the internal store preserving the SVG content from parser
@@ -371,8 +369,7 @@ export default {
           // Preserve the SVG content from the parser instead of creating empty svg object
           svg: {
             objects: doc.konva?.objects || {}, // Use existing objects data
-            path: doc.svgPath || '',
-            polyline: doc.svgPolyline || ''
+            path: doc.svgPath || ''
           }
         });
         
