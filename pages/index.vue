@@ -32,7 +32,7 @@
       </div>   
     </div>    
 
-    <!-- Tools Panel - Right Sidebar -->
+    <!-- API Examples Panel - Right Sidebar -->
     <div style="position: fixed; top: 20px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
       <v-card 
         elevation="4" 
@@ -40,8 +40,8 @@
       >
         <!-- Header -->
         <v-card-title class="py-3">
-          <v-icon class="mr-2">mdi-tools</v-icon>
-          <span class="text-h6">Tools</span>
+          <v-icon class="mr-2">mdi-api</v-icon>
+          <span class="text-h6">API Examples</span>
           <v-spacer></v-spacer>
         </v-card-title>
         
@@ -63,13 +63,13 @@
                 mdi-chevron-down
               </v-icon>
             </v-card-subtitle>
-            <div 
-              class="expandable-content"
-              :class="{ 'expanded': expandedSections.sceneControls }"
-            >
-              <v-card-text class="pt-2">
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
                   Control and manipulate the 3D scene
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">importFileWithNotifications(), resetScene()</code>
                 </div>
                 
                 <v-btn
@@ -79,7 +79,7 @@
                   class="mb-2"
                 >
                   <v-icon small class="mr-1">mdi-import</v-icon>
-                  Import
+                  Import File
                 </v-btn>
                 
                 <v-btn
@@ -89,11 +89,146 @@
                   class="mb-2"
                 >
                   <v-icon small class="mr-1">mdi-refresh</v-icon>
-                  Reset
+                  Reset Scene
                 </v-btn>
                 
               </v-card-text>
-            </div>
+            </v-expand-transition>
+          </v-card>
+
+          <!-- Layer Management Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer pa-2" 
+              @click="expandedSections.layerManagement = !expandedSections.layerManagement"
+            >
+              <v-icon small class="mr-2" color="success">mdi-layers</v-icon>
+              <span class="font-weight-medium">Layer Management</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.layerManagement }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.layerManagement" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Manage layers and documents in the scene
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">setLayerActive(layerId), toggleLayerSelected(layerId)</code>
+                </div>
+                
+                <v-select
+                  v-model="selectedLayerId"
+                  :items="availableLayerIds"
+                  item-title="name"
+                  item-value="id"
+                  label="Select Layer"
+                  prepend-icon="mdi-layers"
+                  dense
+                  outlined
+                  class="mt-4 mb-n3"
+                  :disabled="!floorplan3d || availableLayerIds.length === 0"
+                />
+                
+                <v-btn
+                  color="success"
+                  @click="setLayerActiveExample"
+                  :disabled="!floorplan3d || !selectedLayerId"
+                  elevation="2"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-eye</v-icon>
+                  Set Layer Active
+                </v-btn>
+
+                <v-btn
+                  color="info"
+                  @click="toggleLayerSelectedExample"
+                  :disabled="!floorplan3d || !selectedLayerId"
+                  elevation="2"
+                  block
+                >
+                  <v-icon small class="mr-1">mdi-checkbox-marked-circle</v-icon>
+                  Toggle Layer Selection
+                </v-btn>
+              </v-card-text>
+            </v-expand-transition>
+          </v-card>
+
+          <!-- Layer Config Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer pa-2" 
+              @click="expandedSections.layerConfig = !expandedSections.layerConfig"
+            >
+              <v-icon small class="mr-2" color="warning">mdi-cog</v-icon>
+              <span class="font-weight-medium">Layer Configuration</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.layerConfig }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.layerConfig" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Update layer configuration properties
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">updateLayerConfig(layerId, configPath, value)</code>
+                </div>
+                
+                <v-select
+                  v-model="selectedConfigLayerId"
+                  :items="availableLayerIds"
+                  item-title="name"
+                  item-value="id"
+                  label="Layer to Configure"
+                  prepend-icon="mdi-layers"
+                  dense
+                  outlined
+                  class="mt-4 mb-n3"
+                  :disabled="!floorplan3d || availableLayerIds.length === 0"
+                />
+                
+                <v-select
+                  v-model="selectedConfigPath"
+                  :items="configPaths"
+                  item-title="name"
+                  item-value="path"
+                  label="Configuration Path"
+                  prepend-icon="mdi-file-tree"
+                  dense
+                  outlined
+                  class="mb-n3"
+                  :disabled="!floorplan3d"
+                />
+                
+                <v-text-field
+                  v-model="configValue"
+                  label="Value"
+                  prepend-icon="mdi-numeric"
+                  dense
+                  outlined
+                  class="mb-2"
+                  :disabled="!floorplan3d"
+                  hint="Height value for extrusion (number)"
+                  persistent-hint
+                />
+                
+                <v-btn
+                  color="warning"
+                  @click="updateLayerConfigExample"
+                  :disabled="!floorplan3d || !selectedConfigLayerId || !selectedConfigPath || !configValue"
+                  elevation="2"
+                  block
+                >
+                  <v-icon small class="mr-1">mdi-cog</v-icon>
+                  Update Config
+                </v-btn>
+              </v-card-text>
+            </v-expand-transition>
           </v-card>
 
         </div>
@@ -141,6 +276,10 @@ export default {
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
+        layerManagement: false,
+        autoImport: false,
+        layerConfig: false,
+        dataAccess: false,
       },
       snackbar: {
         show: false,
@@ -150,7 +289,42 @@ export default {
       },
       // Layer storage - synced from floorplan3d
       layers: {},
+      
+      // API Examples data
+      selectedLayerId: null,
+      selectedSvgFile: 'FP3D-00-08.svg',
+      availableSvgFiles: [
+        'FP3D-00-05-caleb.svg',
+        'FP3D-00-05.svg',
+        'FP3D-00-06.svg',
+        'FP3D-00-07.svg',
+        'FP3D-00-08.svg',
+        'FP3D-06-01-caleb.svg',
+        'FP3D-06-01.svg',
+        'FP3D-06-02.svg'
+      ],
+      selectedConfigLayerId: null,
+      selectedConfigPath: null,
+      configValue: '',
+      configPaths: [
+        { name: 'Extrusion Height', path: 'extrusion.height.value' },
+        { name: 'Extrusion Start', path: 'extrusion.start.value' },
+        { name: 'Extrusion End', path: 'extrusion.end.value' },
+        { name: 'Vertical Position', path: 'extrusion.verticalPosition.value' },
+      ],
     };
+  },
+  computed: {
+    availableLayerIds() {
+      if (!this.layers || Object.keys(this.layers).length === 0) {
+        return [];
+      }
+      
+      return Object.entries(this.layers).map(([id, layer]) => ({
+        id: id,
+        name: layer.ui?.displayName || layer.name || id
+      }));
+    },
   },
   mounted() {
     // Store references to renderers
@@ -334,6 +508,118 @@ export default {
     getActiveDocument() {
       return this.getActiveLayer();
     },
+
+    // API Example methods
+    setLayerActiveExample() {
+      if (!this.floorplan3d || !this.selectedLayerId) {
+        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        this.floorplan3d.setLayerActive(this.selectedLayerId);
+        this.showSnackbar(`Layer '${this.selectedLayerId}' set as active`, 'success');
+      } catch (error) {
+        this.showSnackbar(`Error setting layer active: ${error.message}`, 'error');
+      }
+    },
+
+    toggleLayerSelectedExample() {
+      if (!this.floorplan3d || !this.selectedLayerId) {
+        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        this.floorplan3d.toggleLayerSelected(this.selectedLayerId);
+        this.showSnackbar(`Layer '${this.selectedLayerId}' selection toggled`, 'success');
+      } catch (error) {
+        this.showSnackbar(`Error toggling layer selection: ${error.message}`, 'error');
+      }
+    },
+
+    async autoImportSvgExample() {
+      if (!this.floorplan3d || !this.selectedSvgFile) {
+        this.showSnackbar('No SVG file selected or Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        await this.floorplan3d.autoImportSvg(this.selectedSvgFile);
+        this.showSnackbar(`SVG '${this.selectedSvgFile}' imported successfully`, 'success');
+      } catch (error) {
+        this.showSnackbar(`Error importing SVG: ${error.message}`, 'error');
+      }
+    },
+
+    updateLayerConfigExample() {
+      if (!this.floorplan3d || !this.selectedConfigLayerId || !this.selectedConfigPath || !this.configValue) {
+        this.showSnackbar('Missing required fields for layer config update', 'error');
+        return;
+      }
+      
+      try {
+        const numericValue = parseFloat(this.configValue);
+        if (isNaN(numericValue)) {
+          this.showSnackbar('Config value must be a valid number', 'error');
+          return;
+        }
+        
+        this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, numericValue);
+        this.showSnackbar(`Layer config updated: ${this.selectedConfigPath} = ${numericValue}`, 'success');
+      } catch (error) {
+        this.showSnackbar(`Error updating layer config: ${error.message}`, 'error');
+      }
+    },
+
+    getAllDocumentsExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const documents = this.floorplan3d.getAllDocuments();
+        console.log('All Documents:', documents);
+        this.showSnackbar(`Retrieved ${Object.keys(documents).length} documents (check console)`, 'info');
+      } catch (error) {
+        this.showSnackbar(`Error getting documents: ${error.message}`, 'error');
+      }
+    },
+
+    getActiveDocumentExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const activeDoc = this.floorplan3d.getActiveDocument();
+        console.log('Active Document:', activeDoc);
+        if (activeDoc) {
+          this.showSnackbar(`Active document: ${activeDoc.name || activeDoc.id} (check console)`, 'info');
+        } else {
+          this.showSnackbar('No active document found', 'warning');
+        }
+      } catch (error) {
+        this.showSnackbar(`Error getting active document: ${error.message}`, 'error');
+      }
+    },
+
+    getSelectedDocumentsExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const selectedDocs = this.floorplan3d.getSelectedDocuments();
+        console.log('Selected Documents:', selectedDocs);
+        this.showSnackbar(`Retrieved ${selectedDocs.length} selected documents (check console)`, 'info');
+      } catch (error) {
+        this.showSnackbar(`Error getting selected documents: ${error.message}`, 'error');
+      }
+    },
   },
 };
 </script>
@@ -367,6 +653,16 @@ export default {
   line-height: 1.4;
 }
 
+/* Custom styling for code elements */
+.code-dark {
+  color: #2c3e50 !important; /* Dark blue-gray color */
+  background-color: #f8f9fa; /* Light background */
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
 /* Override LayersPanel positioning when inside threejs container */
 #threejs-container .layers-container {
   position: static !important;
@@ -376,16 +672,5 @@ export default {
   border: none !important;
   background-color: transparent !important;
   box-shadow: none !important;
-}
-
-/* Efficient expand/collapse animation */
-.expandable-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
-}
-
-.expandable-content.expanded {
-  max-height: 300px; /* Adjust this value based on your content height */
 }
 </style>
