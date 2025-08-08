@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "cross-env LOCAL_DEV=true nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -16,6 +16,7 @@
     "@nuxtjs/toast": "^3.3.1",
     "@pinia/nuxt": "^0.10.1",
     "@svgedit/svgcanvas": "^7.2.4",
+    "cross-env": "^10.0.0",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",

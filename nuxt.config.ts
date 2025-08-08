@@ -67,13 +67,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Public keys that are exposed to the client
     public: {
-      apiWallsEndpoint: process.env.API_WALLS_ENDPOINT || 'https://novo-floor.cfg3d.net/dev/walls/extract',
-      apiRoomsEndpoint: process.env.API_ROOMS_ENDPOINT || 'https://novo-floor.cfg3d.net/dev/rooms/detect',
-      apiOpenAIEndpoint: process.env.API_OPENAI_ENDPOINT || 'https://j23tfrpio644dejn2uuhvnno2e0vdlxt.lambda-url.us-east-1.on.aws/',
-      developmentMode: process.env.DEVELOPMENT_MODE || 'default',
-      inkscapeGTagPrefix: process.env.INKSCAPE_GTAG_PREFIX || 'floorplan3d-',
-      openaiAltEndpoint: process.env.OPENAI_ALT_ENDPOINT || 'https://7tfjnhaienxd2acxzov7p3jjhe0lcayd.lambda-url.us-east-1.on.aws/',
-      skyboxBaseUrl : process.env.SKYBOX_BASE_URL || "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr"
+      inkscapeGtagPrefix: 'FP3D-' // Default value for FloorPlan3D tags
     }
   },
   compatibilityDate: '2024-11-01',

@@ -76,6 +76,16 @@
                 </v-btn>
                 
                 <v-btn
+                  color="blue"
+                  @click="testSimpleSvg"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-test-tube</v-icon>
+                  Test Simple SVG
+                </v-btn>
+                
+                <v-btn
                   color="red-lighten-1"
                   @click="resetScene"
                   block
@@ -266,6 +276,8 @@ export default {
 
     // Extract shared logic for processing vector documents
     async processVectorDocuments(sortedVectorDocs, successMessage) {
+      console.log('processVectorDocuments called with', sortedVectorDocs.length, 'documents');
+      
       // Process vector documents (rooms and walls) - no Konva layers needed
       for (let doc of sortedVectorDocs) {
         // Check if document with this ID already exists (prevents duplication)
@@ -274,20 +286,29 @@ export default {
           continue;
         }
         
-        // Add the document to the store with SVG objects instead of Konva objects
+        console.log(`Processing document ${doc.id} (${doc.name}):`, {
+          hasSvgPath: !!doc.svgPath,
+          hasSvgPolyline: !!doc.svgPolyline,
+          svgPathLength: doc.svgPath ? doc.svgPath.length : 0,
+          svgPolylineLength: doc.svgPolyline ? doc.svgPolyline.length : 0
+        });
+        
+        // Add the document to the store preserving the SVG content from parser
         this.addDocument(doc.id, doc.name, {
           ...doc,
           ui: {
             ...doc.ui,
             order: doc.ui.order // Use the order assigned by the parser
           },
-          // Store the SVG objects directly for later processing
+          // Preserve the SVG content from the parser instead of creating empty svg object
           svg: {
             objects: doc.konva?.objects || {}, // Use existing objects data
-            path: '',
-            polyline: ''
+            path: doc.svgPath || '',
+            polyline: doc.svgPolyline || ''
           }
         });
+        
+        console.log(`Document ${doc.id} added to store`);
       }
 
       // Activate all vector documents after processing
@@ -318,6 +339,8 @@ export default {
           return;
         }
         
+        console.log('Starting auto-import of SVG...');
+        
         // Fetch the SVG file from the public directory
         const response = await fetch('/inkscape-samples/FP3D-00-07.svg');
         if (!response.ok) {
@@ -325,17 +348,34 @@ export default {
         }
         
         const svgContent = await response.text();
+        console.log('SVG content fetched, length:', svgContent.length);
         
         // Create importer instance
         const importer = new Floorplan3D(null, null, null);
         
         // Import the SVG content
+        console.log('Starting SVG import...');
         const importedData = await importer.importSvg(svgContent);
+        console.log('SVG import completed:', importedData);
+        
+        // Check if we have valid vector documents
+        if (!importedData.vectorDocuments || importedData.vectorDocuments.length === 0) {
+          throw new Error('No valid documents found in SVG file');
+        }
+        
+        console.log('Vector documents found:', importedData.vectorDocuments.length);
         
         // Sort and assign orders to vector documents using the parser utility
         const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
           SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
         );
+
+        // Check if we still have documents after processing
+        if (sortedVectorDocs.length === 0) {
+          throw new Error('No valid documents after processing');
+        }
+
+        console.log('Processing', sortedVectorDocs.length, 'sorted vector documents...');
 
         // Use the extracted method for processing
         await this.processVectorDocuments(sortedVectorDocs, 'FP3D-00-07.svg imported successfully');
@@ -380,6 +420,37 @@ export default {
       this.showSnackbar('Scene reset successfully', 'success');
     },
 
+    async testSimpleSvg() {
+      try {
+        console.log('Testing simple SVG rendering...');
+        
+        // Create a simple SVG with basic shapes
+        const testSvg = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 10 10 L 90 10 L 90 90 L 10 90 Z" fill="#ff0000" stroke="#000000" stroke-width="1"/>
+          <path d="M 20 20 L 80 20 L 80 80 L 20 80 Z" fill="#00ff00" stroke="#000000" stroke-width="1"/>
+        </svg>`;
+        
+        console.log('Test SVG:', testSvg);
+        
+        // Get the floorplan3d instance
+        const floorplan3d = this.$refs.threejsRenderer?.floorplan3d;
+        if (!floorplan3d) {
+          throw new Error('Floorplan3D instance not available');
+        }
+        
+        console.log('Floorplan3D instance found, calling renderSvgToScene...');
+        
+        // Call renderSvgToScene directly
+        await floorplan3d.renderSvgToScene(testSvg, 'test-simple');
+        
+        this.showSnackbar('Test SVG rendered successfully', 'success');
+        
+      } catch (error) {
+        console.error('Error testing simple SVG:', error);
+        this.showSnackbar(`Test failed: ${error.message}`, 'error');
+      }
+    },
+
     showSnackbar(text, color = 'success') {
       this.snackbar.text = text;
       this.snackbar.color = color;
@@ -401,23 +472,64 @@ export default {
 
     // Method to generate SVG from objects and render to 3D scene
     generateAndRenderSvg(documentId) {
+      console.log(`generateAndRenderSvg called for document ${documentId}`);
       const doc = this.getDocument(documentId);
-      if (!doc || !doc.svg || !doc.svg.objects) {
-        console.warn(`Document ${documentId} not found or has no SVG objects`);
+      if (!doc) {
+        console.warn(`Document ${documentId} not found`);
         return;
       }
 
-      if (!doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) {
-        console.warn(`Document ${documentId} missing SVG configuration`);
+      console.log(`Document ${documentId} structure:`, {
+        hasSvgPath: !!doc.svgPath,
+        hasSvgPolyline: !!doc.svgPolyline,
+        hasSvgObjectPath: !!(doc.svg && doc.svg.path),
+        hasSvgObjectPolyline: !!(doc.svg && doc.svg.polyline),
+        hasSvgObjects: !!(doc.svg && doc.svg.objects),
+        svgPathPreview: doc.svgPath ? doc.svgPath.substring(0, 100) : 'null',
+        svgPolylinePreview: doc.svgPolyline ? doc.svgPolyline.substring(0, 100) : 'null',
+        svgObjectPathPreview: (doc.svg && doc.svg.path) ? doc.svg.path.substring(0, 100) : 'null'
+      });
+
+      // Check if we have SVG content from the parsed document
+      let svgContent = null;
+      
+      // First try to use the SVG content directly from the parsed document (top level)
+      if (doc.svgPath) {
+        svgContent = doc.svgPath;
+        console.log(`Using svgPath content for document ${documentId}`);
+      } else if (doc.svgPolyline) {
+        svgContent = doc.svgPolyline;
+        console.log(`Using svgPolyline content for document ${documentId}`);
+      } 
+      // Then try the svg object properties
+      else if (doc.svg && doc.svg.path) {
+        svgContent = doc.svg.path;
+        console.log(`Using svg.path content for document ${documentId}`);
+      } else if (doc.svg && doc.svg.polyline) {
+        svgContent = doc.svg.polyline;
+        console.log(`Using svg.polyline content for document ${documentId}`);
+      } 
+      // Fallback to generating SVG from objects if available
+      else if (doc.svg && doc.svg.objects && Object.keys(doc.svg.objects).length > 0) {
+        if (!doc.docConfigs || !doc.docConfigs.svg || !doc.docConfigs.svg.mode) {
+          console.warn(`Document ${documentId} missing SVG configuration`);
+          return;
+        }
+        const objects = doc.svg.objects;
+        const svgMode = doc.docConfigs.svg.mode.value;
+        svgContent = SvgUtils.toSvg(objects, svgMode);
+        console.log(`Generated SVG from objects for document ${documentId}`);
+      }
+      
+      if (!svgContent) {
+        console.warn(`Document ${documentId} has no SVG content to render`);
         return;
       }
-
-      const objects = doc.svg.objects;
-      const svgMode = doc.docConfigs.svg.mode.value;
-      const svg = SvgUtils.toSvg(objects, svgMode);
+      
+      console.log(`Rendering SVG content for ${documentId}:`, svgContent.substring(0, 200));
       
       // Render to 3D scene
-      this.renderDocumentToScene(documentId, svg);
+      this.renderDocumentToScene(documentId, svgContent);
     },
 
     // Method to regenerate SVG for the currently active document
