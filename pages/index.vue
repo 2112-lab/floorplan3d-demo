@@ -1,4 +1,5 @@
-<template>  
+ 
+<template> 
   <!-- Main application container with light background -->
   <v-app id="appContainer" style="background-color:#f5f5f5;">     
     <!-- Hidden SVG renderer for dependencies (no longer uses Konva) -->
@@ -149,7 +150,6 @@ export default {
       },
       // Layer storage - synced from floorplan3d
       layers: {},
-      documents: {}, // Legacy - kept for backward compatibility
     };
   },
   mounted() {
@@ -253,7 +253,6 @@ export default {
     syncLayersFromFloorplan3D() {
       if (this.floorplan3d?.layerStore) {
         this.layers = { ...this.floorplan3d.layerStore.layers };
-        this.documents = { ...this.layers }; // Keep backward compatibility
       }
     },
 

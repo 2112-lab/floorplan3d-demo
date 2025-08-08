@@ -87,6 +87,7 @@
                   ></v-btn>
                 </template>
                 <v-list density="compact">
+                  <!-- Temporarily disabled - functionality not implemented
                   <v-list-item 
                     @click="moveLayerUp(layer.id)"
                     :disabled="isFirstLayer(layer) || layer.disabled"
@@ -108,6 +109,7 @@
                   </v-list-item>
                   
                   <v-divider></v-divider>
+                  -->
                   
                   <v-list-item 
                     @click="openRenameDialog(layer)"
@@ -119,6 +121,7 @@
                     <v-list-item-title>Rename</v-list-item-title>
                   </v-list-item>
                   
+                  <!-- Temporarily disabled - functionality not implemented
                   <v-list-item 
                     @click="cloneLayer(layer.id)"
                     :disabled="layer.disabled"
@@ -139,6 +142,7 @@
                     </template>
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
+                  -->
                 </v-list>
               </v-menu>
             </div>
@@ -342,36 +346,6 @@ export default {
       if (this.floorplan3d) {
         this.floorplan3d.setLayerActive(layerId);
       }
-    },
-    
-    moveLayerUp(layerId) {
-      // Note: moveLayerUp method needs to be implemented in layerStore if needed
-      console.log('moveLayerUp not implemented in layerStore');
-    },
-    
-    moveLayerDown(layerId) {
-      // Note: moveLayerDown method needs to be implemented in layerStore if needed
-      console.log('moveLayerDown not implemented in layerStore');
-    },
-    
-    cloneLayer(layerId) {
-      // Note: cloneLayer method needs to be implemented in layerStore if needed
-      console.log('cloneLayer not implemented in layerStore');
-    },
-    
-    deleteLayer(layerId) {
-      // Note: deleteLayer method needs to be implemented in layerStore if needed
-      console.log('deleteLayer not implemented in layerStore');
-    },
-    
-    isFirstLayer(layer) {
-      // Check if this layer has the lowest order value
-      return layer.ui.order === Math.min(...Object.values(this.layers).map(l => l.ui.order));
-    },
-    
-    isLastLayer(layer) {
-      // Check if this layer has the highest order value
-      return layer.ui.order === Math.max(...Object.values(this.layers).map(l => l.ui.order));
     },
     
     openRenameDialog(layer) {
