@@ -40,7 +40,6 @@
               <!-- 3D Toggle Icon -->
               <v-icon 
                 color="black" 
-                size="x-small"
                 class="mr-1"
                 @click.stop="toggle3DVisibility(layer.id)"
                 :disabled="layer.disabled || layer.metadata.category !== 'vector'"
@@ -50,6 +49,9 @@
               </v-icon>              <span 
                 :class="{ 'text--disabled': layer.disabled }"
                 class="small-text"
+                @dblclick.stop="openRenameDialog(layer)"
+                style="cursor: text;"
+                title="Double-click to rename"
               >{{ layer.ui.displayName }}</span>
               <v-tooltip location="top">
                 <template v-slot:activator="{ props }">
@@ -65,114 +67,85 @@
                 <span>{{ layer.metadata.category === 'vector' ? 'Vector' : 'Raster' }}</span>
               </v-tooltip>
             </div>
-            <div class="layer-controls" :class="{ 'visible': layer.ui.menuOpen }">
-              <!-- Dots vertical menu -->
-              <v-menu
-                v-model="layer.ui.menuOpen"
-                :close-on-content-click="true"
-                location="end"
-                offset="5"
-                @close="handleMenuClose(layer.id)"
+            <div class="layer-controls">
+              <!-- Chevron button to expand 3D controls -->
+              <v-btn 
+                v-if="layer.metadata.category === 'vector'"
+                variant="text" 
+                size="x-small" 
+                density="compact"
+                class="layer-btn"
+                :disabled="layer.disabled"
+                @click.stop="toggleControlsExpanded(layer.id)"
               >
-                <template v-slot:activator="{ props }">                  
-                  <v-btn 
-                    icon="mdi-dots-vertical" 
-                    variant="text" 
-                    size="x-small" 
-                    density="compact"
-                    class="layer-btn"
-                    :disabled="layer.disabled"
-                    v-bind="props"
-                    @click.stop
-                  ></v-btn>
-                </template>
-                <v-list density="compact">
-                  <!-- Temporarily disabled - functionality not implemented
-                  <v-list-item 
-                    @click="moveLayerUp(layer.id)"
-                    :disabled="isFirstLayer(layer) || layer.disabled"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon size="small">mdi-arrow-up</v-icon>
-                    </template>
-                    <v-list-item-title>Move Up</v-list-item-title>
-                  </v-list-item>
-                  
-                  <v-list-item 
-                    @click="moveLayerDown(layer.id)"
-                    :disabled="isLastLayer(layer) || layer.disabled || sortedLayers.length == 1"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon size="small">mdi-arrow-down</v-icon>
-                    </template>
-                    <v-list-item-title>Move Down</v-list-item-title>
-                  </v-list-item>
-                  
-                  <v-divider></v-divider>
-                  -->
-                  
-                  <v-list-item 
-                    @click="openRenameDialog(layer)"
-                    :disabled="layer.disabled"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon size="small">mdi-pencil</v-icon>
-                    </template>
-                    <v-list-item-title>Rename</v-list-item-title>
-                  </v-list-item>
-                  
-                  <!-- Temporarily disabled - functionality not implemented
-                  <v-list-item 
-                    @click="cloneLayer(layer.id)"
-                    :disabled="layer.disabled"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon size="small">mdi-content-copy</v-icon>
-                    </template>
-                    <v-list-item-title>Clone</v-list-item-title>
-                  </v-list-item>
-                  
-                  <v-list-item 
-                    @click="deleteLayer(layer.id)"
-                    :disabled="layer.disabled"
-                    class="text-error"
-                  >
-                    <template v-slot:prepend>
-                      <v-icon size="small" color="error">mdi-delete</v-icon>
-                    </template>
-                    <v-list-item-title>Delete</v-list-item-title>
-                  </v-list-item>
-                  -->
-                </v-list>
-              </v-menu>
+                <v-icon 
+                  size="x-small"
+                  :class="{ 'rotate-180': isControlsExpanded(layer.id) }"
+                >
+                  mdi-chevron-down
+                </v-icon>
+              </v-btn>
             </div>
           </div>
           
-          <!-- Opacity Slider (Commented out as in original) -->
-          <!-- <div class="opacity-slider-container" @click.stop>
-            <v-tooltip location="top">
-              <template v-slot:activator="{}">
-              <div style="width:24px; text-align:right; margin-right:2px">
-                {{(layer.layerConfigs.layer.opacity.value * 100).toFixed(0)}}
+          <!-- Collapsible 3D Controls Section for Vector Layers -->
+          <div 
+            v-if="layer.metadata.category === 'vector' && isControlsExpanded(layer.id)" 
+            class="controls-section" 
+            @click.stop
+          >
+            <div 
+              class="controls-content pa-2"
+              style="background-color: #f8f9fa; border-top: 1px solid #e9ecef;"
+            >
+
+              <!-- Extrusion Height Slider -->
+              <div v-if="layer.layerConfigs?.extrusion?.height" class="control-row mb-2">
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-caption">Extrusion Height</span>
+                  <span class="text-caption text--secondary">
+                    {{ Math.round(layer.layerConfigs.extrusion.height.value) }}
+                  </span>
+                </div>
+                <v-slider
+                  v-model="layer.layerConfigs.extrusion.height.value"
+                  :min="layer.layerConfigs.extrusion.height.min"
+                  :max="layer.layerConfigs.extrusion.height.max"
+                  :step="layer.layerConfigs.extrusion.height.step"
+                  :disabled="layer.disabled"
+                  density="compact"
+                  hide-details
+                  class="control-slider"
+                  @update:model-value="updateExtrusionHeight(layer.id)"
+                  thumb-size="12"
+                  track-size="2"
+                ></v-slider>
               </div>
-              
-              </template>
-              <span>Opacity: {{ Math.round(layer.layerConfigs.layer.opacity.value * 100) }}%</span>
-            </v-tooltip>
-            <v-slider
-              v-model="layer.layerConfigs.layer.opacity.value"
-              :min="0"
-              :max="1"
-              :step="0.01"
-              :disabled="layer.disabled"
-              density="compact"
-              hide-details
-              class="opacity-slider"
-              @click.stop
-              @input="updateLayerOpacity(layer.id)"
-              thumb-size="1"
-            ></v-slider>
-          </div> -->
+
+              <!-- Extrusion Opacity Slider -->
+              <div v-if="layer.layerConfigs?.extrusion?.opacity" class="control-row mb-1">
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-caption">3D Mesh Opacity</span>
+                  <span class="text-caption text--secondary">
+                    {{ Math.round(layer.layerConfigs.extrusion.opacity.value * 100) }}%
+                  </span>
+                </div>
+                <v-slider
+                  v-model="layer.layerConfigs.extrusion.opacity.value"
+                  :min="0"
+                  :max="1"
+                  :step="0.01"
+                  :disabled="layer.disabled"
+                  density="compact"
+                  hide-details
+                  class="control-slider"
+                  @update:model-value="updateExtrusionOpacity(layer.id)"
+                  thumb-size="12"
+                  track-size="2"
+                ></v-slider>
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>
@@ -221,6 +194,8 @@
 </template>
 
 <script>
+import { reactive } from 'vue';
+
 export default {
   props: {
     floorplan3d: {
@@ -234,7 +209,8 @@ export default {
       isPanelCollapsed: false,
       renameDialogVisible: false,
       newLayerName: '',
-      layerToRename: null
+      layerToRename: null,
+      expandedControls: reactive({}) // Track which layers have expanded controls
     };
   },
   computed: {
@@ -323,18 +299,11 @@ export default {
     },
     
     closeAllMenus() {
-      // Close all open menus
-      for (const layerId in this.layers) {
-        if (this.layers[layerId].ui?.menuOpen) {
-          this.layers[layerId].ui.menuOpen = false;
-        }
-      }
+      // No longer needed since we removed the dropdown menus
     },
     
     togglePanel() {
-      // First close all open menus to prevent visual artifacts
-      this.closeAllMenus();
-      // Then toggle the panel state
+      // Toggle the panel collapse state
       this.isPanelCollapsed = !this.isPanelCollapsed;
     },
     
@@ -378,32 +347,6 @@ export default {
       this.layerToRename = null;
     },
     
-    handleMenuClose(layerId) {
-      // No additional actions needed
-    },
-    
-    updateLayerOpacity(layerId) {
-      const layer = this.layers[layerId];
-      if (layer && this.floorplan3d) {
-        // Use floorplan3d's updateLayerConfig method
-        this.floorplan3d.updateLayerConfig(
-          layerId, 
-          'layerConfigs.layer.opacity.value', 
-          layer.layerConfigs.layer.opacity.value
-        );
-      }
-    },
-
-    toggleLayerSelected(layerId) {
-      const layer = this.layers[layerId];
-      if (layer?.disabled) return;
-      
-      // Toggle selected state using floorplan3d instance
-      if (this.floorplan3d) {
-        this.floorplan3d.toggleLayerSelected(layerId);
-      }
-    },
-    
     toggle3DVisibility(layerId) {
       console.log("toggle3DVisibility started for layer:", layerId);
       const layer = this.layers[layerId];
@@ -422,6 +365,40 @@ export default {
             obj.visible = newValue;
           }   
         }
+      }
+    },
+
+    // Methods for managing expanded controls state
+    toggleControlsExpanded(layerId) {
+      this.expandedControls[layerId] = !this.expandedControls[layerId];
+    },
+
+    isControlsExpanded(layerId) {
+      return !!this.expandedControls[layerId];
+    },
+
+    // Methods for updating extrusion properties
+    updateExtrusionHeight(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Use floorplan3d's updateLayerConfig method
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.height.value', 
+          layer.layerConfigs.extrusion.height.value
+        );
+      }
+    },
+
+    updateExtrusionOpacity(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Use floorplan3d's updateLayerConfig method
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.opacity.value', 
+          layer.layerConfigs.extrusion.opacity.value
+        );
       }
     }
   }
@@ -514,16 +491,6 @@ export default {
   opacity: 1;
 }
 
-/* Display controls when menu is open */
-.layer-controls.visible {
-  opacity: 1;
-}
-
-/* Keep the controls visible when menu is open - alternative approach */
-.layer-item .layer-controls:has(.v-btn:has(+ .v-overlay--active)) {
-  opacity: 1;
-}
-
 .layer-btn {
   margin: 0;
   height: 24px;
@@ -566,6 +533,58 @@ export default {
 .compact-checkbox :deep(.v-selection-control__wrapper) {
   margin: 0;
   height: 24px;
+}
+
+/* 3D Controls Section Styles */
+.controls-section {
+  margin-top: 2px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.controls-header {
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.controls-header:hover {
+  background-color: #e9ecef !important;
+}
+
+.controls-content {
+  animation: slideDown 0.3s ease;
+}
+
+.control-row {
+  margin-bottom: 8px;
+}
+
+.control-slider {
+  margin-top: 4px;
+}
+
+.control-slider :deep(.v-slider-track__fill) {
+  background-color: #1976d2;
+}
+
+.control-slider :deep(.v-slider-thumb) {
+  color: #1976d2;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
 }
 </style>
 
