@@ -6,12 +6,11 @@
 
 <script>
 import Floorplan3D from "@2112-lab/floorplan3d";
-import { useSvgStore } from "~/store/svg-store";
 
 export default {
   data() {
     return {
-      svgStore: useSvgStore(),
+      // No longer need external store - floorplan3d manages documents internally
     };
   },
   mounted() {
@@ -37,15 +36,8 @@ export default {
       // Initialize using Floorplan3D class
       this.floorplan3d = new Floorplan3D(rendererRef, width, height);
 
-      // Set up callbacks for Nuxt-specific functionality
-      this.floorplan3d.setCallbacks({
-        getSvgStore: () => this.svgStore,
-        getRuntimeConfig: () => useRuntimeConfig(),
-        getDefaultConfigs: () => ({
-          vector: this.svgStore.defaultVectorConfigs,
-          raster: this.svgStore.defaultRasterConfigs
-        })
-      });
+      // The floorplan3d instance now has its own internal document store
+      // No need to set up external callbacks for basic functionality
 
       // Make sure the animation is running
       this.floorplan3d.startAnimation();

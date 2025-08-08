@@ -121,9 +121,8 @@
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { cloneDeep } from 'lodash';
-import { SvgUtils } from "@2112-lab/floorplan3d";
+import { SvgUtils, defaultVectorConfigs, defaultMetadata } from "@2112-lab/floorplan3d";
 import Floorplan3D, { SvgDocumentParser } from "@2112-lab/floorplan3d";
-import { useSvgStore } from "~/store/svg-store";
 
 export default {
   components: {
@@ -132,7 +131,6 @@ export default {
   },
     data() {
     return {
-      svgStore: useSvgStore(),
       threejsRenderer: null,
       expandedSections: {
         sceneControls: true,
@@ -143,32 +141,11 @@ export default {
         color: 'success',
         timeout: 3000,
       },
-      // Simple document storage replacing Konva store
+      // Simple document storage now handled by floorplan3d instance
       documents: {},
       // Default configs for vector documents
-      defaultVectorConfigs: {
-        layer: {
-          opacity: { min: 0, max: 1, step: 0.2, value: 1, default: 1 },
-          scale: { min: 0.1, max: 2, step: 0.1, value: 1, default: 1 },
-          pos: {
-            x: { min: -100, max: 100, value: 0, default: 0 },
-            y: { min: -100, max: 100, value: 0, default: 0 },
-          },
-        },
-        extrusion: {
-          height: { min: 1, max: 100, step: 1, value: 30, default: 30 },
-          opacity: { min: 0, max: 1, step: 0.05, value: 1, default: 1 },
-          verticalPosition: { min: -50, max: 50, step: 0.5, value: 0, default: 0 },
-        },
-        svg: {
-          mode: { options: ["path", "polyline"], value: "path", default: "path" },
-        },
-      },
-      defaultMetadata: {
-        category: "vector",
-        type: "svg",
-        subtype: "paths",
-      },
+      defaultVectorConfigs: defaultVectorConfigs,
+      defaultMetadata: defaultMetadata,
     };
   },
   mounted() {
@@ -181,13 +158,15 @@ export default {
       this.autoImportSvg();
     }, 500);
     
-    // Set up a watcher to sync documents from SVG renderer's store
-    this.$watch(() => this.svgStore.documents || {}, (newDocs) => {
-      this.documents = { ...newDocs };
+    // Set up a watcher to sync documents from floorplan3d instance's internal store
+    this.$watch(() => this.threejsRenderer?.floorplan3d?.documentStore?.getState() || {}, (newState) => {
+      if (newState.documents) {
+        this.documents = { ...newState.documents };
+      }
     }, { deep: true, immediate: true });
   },
   methods: {
-    // Simple document management methods that sync with SVG store
+    // Simple document management methods that use floorplan3d's internal store
     addDocument(doc_id, name, configs) {
       // Check if document already exists to prevent duplication
       if (this.documents[doc_id]) {
@@ -195,19 +174,19 @@ export default {
         return;
       }
       
-      // Add to SVG renderer's store if available
-      if (this.svgStore) {
-        this.svgStore.addDocument(doc_id, name, configs);
+      // Add to floorplan3d's internal store if available
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.addDocument(doc_id, name, configs);
       }
       
       // Sync to local storage for easy access
-      this.syncDocumentsFromSvgStore();
+      this.syncDocumentsFromFloorplan3d();
     },
 
-    syncDocumentsFromSvgStore() {
-      // Sync the SVG renderer store documents to local reactive data
-      if (this.svgStore) {
-        this.documents = { ...this.svgStore.documents };
+    syncDocumentsFromFloorplan3d() {
+      // Sync the floorplan3d internal store documents to local reactive data
+      if (this.threejsRenderer?.floorplan3d?.documentStore) {
+        this.documents = { ...this.threejsRenderer.floorplan3d.documentStore.documents };
       }
     },
 
@@ -235,40 +214,33 @@ export default {
     },
 
     setDocumentActive(doc_id) {
-      // Use SVG renderer's store to set document active
-      if (this.svgStore) {
-        this.svgStore.setDocumentActive(doc_id);
+      // Use floorplan3d's internal store to set document active
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.setDocumentActive(doc_id);
       }
-      this.syncDocumentsFromSvgStore();
-      
-      // Directly generate and render SVG for vector documents
-      const activeDoc = this.documents[doc_id];
-      if (activeDoc && activeDoc.metadata.category === "vector") {
-        // Use the new direct method to generate and render SVG
-        this.generateAndRenderSvg(doc_id);
-      }
+      this.syncDocumentsFromFloorplan3d();
     },
 
     toggleDocumentSelected(documentId) {
-      if (this.svgStore) {
-        this.svgStore.toggleDocumentSelected(documentId);
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.toggleDocumentSelected(documentId);
       }
-      this.syncDocumentsFromSvgStore();
+      this.syncDocumentsFromFloorplan3d();
     },
 
     clearAllDocuments() {
-      // Clear SVG renderer store documents
-      if (this.svgStore) {
-        this.svgStore.clearAllDocuments();
+      // Clear floorplan3d internal store documents
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.clearAllDocuments();
       }
-      this.syncDocumentsFromSvgStore();
+      this.syncDocumentsFromFloorplan3d();
     },
 
     // Extract shared logic for processing vector documents
     async processVectorDocuments(sortedVectorDocs, successMessage) {
       console.log('processVectorDocuments called with', sortedVectorDocs.length, 'documents');
       
-      // Process vector documents (rooms and walls) - no Konva layers needed
+      // Process vector documents (rooms and walls) - using floorplan3d internal store
       for (let doc of sortedVectorDocs) {
         // Check if document with this ID already exists (prevents duplication)
         if (this.documents[doc.id]) {
@@ -283,7 +255,7 @@ export default {
           svgPolylineLength: doc.svgPolyline ? doc.svgPolyline.length : 0
         });
         
-        // Add the document to the store preserving the SVG content from parser
+        // Add the document to the internal store preserving the SVG content from parser
         this.addDocument(doc.id, doc.name, {
           ...doc,
           ui: {
@@ -308,17 +280,9 @@ export default {
 
     // Extract shared logic for activating vector documents
     activateVectorDocuments() {
-      setTimeout(() => {
-        // Sequentially set each vector document as active and generate SVG
-        for(let docKey in this.documents) {
-          let doc = this.documents[docKey];
-          if(doc.metadata.category === "vector") {
-            setTimeout(() => {
-              this.setDocumentActive(docKey);
-            }, 10);
-          }
-        }          
-      }, 100);
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.activateVectorDocuments();
+      }
     },
 
     async autoImportSvg() {
@@ -340,35 +304,16 @@ export default {
         const svgContent = await response.text();
         console.log('SVG content fetched, length:', svgContent.length);
         
-        // Create importer instance
-        const importer = new Floorplan3D(null, null, null);
-        
-        // Import the SVG content
-        console.log('Starting SVG import...');
-        const importedData = await importer.importSvg(svgContent);
-        console.log('SVG import completed:', importedData);
-        
-        // Check if we have valid vector documents
-        if (!importedData.vectorDocuments || importedData.vectorDocuments.length === 0) {
-          throw new Error('No valid documents found in SVG file');
+        // Use floorplan3d's comprehensive import method
+        if (this.threejsRenderer?.floorplan3d) {
+          const result = await this.threejsRenderer.floorplan3d.importAndStoreDocuments(svgContent);
+          console.log('SVG import completed:', result);
+          
+          this.syncDocumentsFromFloorplan3d();
+          this.showSnackbar('FP3D-00-08.svg imported successfully', 'success');
+        } else {
+          throw new Error('Floorplan3D instance not available');
         }
-        
-        console.log('Vector documents found:', importedData.vectorDocuments.length);
-        
-        // Sort and assign orders to vector documents using the parser utility
-        const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
-          SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
-        );
-
-        // Check if we still have documents after processing
-        if (sortedVectorDocs.length === 0) {
-          throw new Error('No valid documents after processing');
-        }
-
-        console.log('Processing', sortedVectorDocs.length, 'sorted vector documents...');
-
-        // Use the extracted method for processing
-        await this.processVectorDocuments(sortedVectorDocs, 'FP3D-00-07.svg imported successfully');
         
       } catch (error) {
         console.error("Error auto-importing SVG file:", error);
@@ -378,18 +323,19 @@ export default {
 
     async importFile() {
       try {
-        const importer = new Floorplan3D(null, null, null);
-        const importedData = await importer.importFile();
+        if (!this.threejsRenderer?.floorplan3d) {
+          throw new Error('Floorplan3D instance not available');
+        }
+        
+        const result = await this.threejsRenderer.floorplan3d.importFileWithStorage();
         
         // handle svg upload
-        if(importedData.type === "svg"){
-          // Sort and assign orders to vector documents using the parser utility
-          const sortedVectorDocs = SvgDocumentParser.assignDocumentOrders(
-            SvgDocumentParser.sortDocumentsByType(importedData.vectorDocuments)
-          );
-
-          // Use the extracted method for processing
-          await this.processVectorDocuments(sortedVectorDocs, 'SVG file imported successfully');
+        if(result.type === "svg"){
+          this.syncDocumentsFromFloorplan3d();
+          this.showSnackbar('SVG file imported successfully', 'success');
+        } else {
+          // For non-SVG files, handle as before
+          this.showSnackbar('File imported successfully', 'success');
         }        
 
       } catch(error) {
@@ -404,7 +350,7 @@ export default {
         return;
       }
 
-      // Use the new clearAllDocuments method instead of direct assignment
+      // Use the new clearAllDocuments method
       this.clearAllDocuments();
       
       this.showSnackbar('Scene reset successfully', 'success');
@@ -431,53 +377,9 @@ export default {
 
     // Method to generate SVG from objects and render to 3D scene
     generateAndRenderSvg(documentId) {
-      console.log(`generateAndRenderSvg called for document ${documentId}`);
-      const doc = this.getDocument(documentId);
-      if (!doc) {
-        console.warn(`Document ${documentId} not found`);
-        return;
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.generateAndRenderSvg(documentId);
       }
-
-      console.log(`Document ${documentId} structure:`, {
-        hasSvgPath: !!doc.svgPath,
-        hasSvgPolyline: !!doc.svgPolyline,
-        hasSvgObjectPath: !!(doc.svg && doc.svg.path),
-        hasSvgObjectPolyline: !!(doc.svg && doc.svg.polyline),
-        hasSvgObjects: !!(doc.svg && doc.svg.objects),
-        svgPathPreview: doc.svgPath ? doc.svgPath.substring(0, 100) : 'null',
-        svgPolylinePreview: doc.svgPolyline ? doc.svgPolyline.substring(0, 100) : 'null',
-        svgObjectPathPreview: (doc.svg && doc.svg.path) ? doc.svg.path.substring(0, 100) : 'null'
-      });
-
-      // Check if we have SVG content from the parsed document
-      let svgContent = null;
-      
-      // First try to use the SVG content directly from the parsed document (top level)
-      if (doc.svgPath) {
-        svgContent = doc.svgPath;
-        console.log(`Using svgPath content for document ${documentId}`);
-      } else if (doc.svgPolyline) {
-        svgContent = doc.svgPolyline;
-        console.log(`Using svgPolyline content for document ${documentId}`);
-      } 
-      // Then try the svg object properties
-      else if (doc.svg && doc.svg.path) {
-        svgContent = doc.svg.path;
-        console.log(`Using svg.path content for document ${documentId}`);
-      } else if (doc.svg && doc.svg.polyline) {
-        svgContent = doc.svg.polyline;
-        console.log(`Using svg.polyline content for document ${documentId}`);
-      } 
-      
-      if (!svgContent) {
-        console.warn(`Document ${documentId} has no SVG content to render`);
-        return;
-      }
-      
-      console.log(`Rendering SVG content for ${documentId}:`, svgContent.substring(0, 200));
-      
-      // Render to 3D scene
-      this.renderDocumentToScene(documentId, svgContent);
     },
 
     // Method to regenerate SVG for the currently active document

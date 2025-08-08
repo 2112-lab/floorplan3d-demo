@@ -231,12 +231,10 @@
 </template>
 
 <script>
-import { useSvgStore } from "~/store/svg-store";
-
 export default {
   data() {
     return {
-      svgStore: useSvgStore(),
+      documents: {},
       isPanelCollapsed: false,
       renameDialogVisible: false,
       newLayerName: '',
@@ -246,7 +244,7 @@ export default {
   computed: {
     areAllDocumentsInvisible() {
       // Consider a document invisible if its opacity is 0
-      return Object.values(this.svgStore.documents).every(doc => 
+      return Object.values(this.documents).every(doc => 
         doc.docConfigs.layer.opacity.value === 0
       );
     },
@@ -254,7 +252,7 @@ export default {
     // Get sorted documents for display
     sortedDocuments() {
       // Create a copy of documents object as array with id included
-      return Object.entries(this.svgStore.documents)
+      return Object.entries(this.documents)
         .filter(([id, doc]) => {
           // Filter out documents with names "grid" or "selection"
           return !["grid", "selection"].includes(doc.name.toLowerCase());
@@ -264,6 +262,11 @@ export default {
           id // Include the document id (object key) in each document object
         }))
         .sort((a, b) => a.ui.order - b.ui.order);
+    },
+    
+    // Get floorplan3d instance from parent
+    floorplan3d() {
+      return this.$parent?.threejsRenderer?.floorplan3d;
     }
   },
   mounted() {
@@ -272,13 +275,38 @@ export default {
     
     // Listen for the custom close-v-menus event from svg renderer
     document.addEventListener('close-v-menus', this.closeAllMenus);
+    
+    // Set up watcher for document changes from floorplan3d
+    this.setupDocumentWatcher();
   },
   beforeUnmount() {
     // Remove event listeners when component is destroyed
     document.removeEventListener('click', this.handleOutsideClick);
     document.removeEventListener('close-v-menus', this.closeAllMenus);
+    
+    // Cleanup document subscription
+    if (this.unsubscribeDocuments) {
+      this.unsubscribeDocuments();
+    }
   },
   methods: {
+    setupDocumentWatcher() {
+      // Subscribe to document changes from floorplan3d instance
+      if (this.floorplan3d?.documentStore) {
+        this.unsubscribeDocuments = this.floorplan3d.documentStore.subscribe((state) => {
+          this.documents = { ...state.documents };
+        });
+        
+        // Initial sync
+        this.documents = { ...this.floorplan3d.documentStore.documents };
+      } else {
+        // Retry after a short delay if floorplan3d is not ready
+        setTimeout(() => {
+          this.setupDocumentWatcher();
+        }, 100);
+      }
+    },
+    
     handleOutsideClick(event) {
       // Check if the click was on svg container
       const svgContainer = document.getElementById('svg-container');
@@ -289,9 +317,9 @@ export default {
     
     closeAllMenus() {
       // Close all open menus
-      for (const docId in this.svgStore.documents) {
-        if (this.svgStore.documents[docId].ui.menuOpen) {
-          this.svgStore.documents[docId].ui.menuOpen = false;
+      for (const docId in this.documents) {
+        if (this.documents[docId].ui?.menuOpen) {
+          this.documents[docId].ui.menuOpen = false;
         }
       }
     },
@@ -304,45 +332,47 @@ export default {
     },
     
     selectDocument(documentId) {
-      const doc = this.svgStore.documents[documentId];
-      if (doc.disabled) return;
+      const doc = this.documents[documentId];
+      if (doc?.disabled) return;
       
-      // Set the document as active
-      this.svgStore.setDocumentActive(documentId);
+      // Set the document as active using floorplan3d instance
+      if (this.floorplan3d) {
+        this.floorplan3d.setDocumentActive(documentId);
+      }
     },
     
     moveDocumentUp(documentId) {
-      // Note: moveDocumentUp method needs to be implemented in svg-store if needed
-      console.log('moveDocumentUp not implemented in svg-store');
+      // Note: moveDocumentUp method needs to be implemented in DocumentStore if needed
+      console.log('moveDocumentUp not implemented in DocumentStore');
     },
     
     moveDocumentDown(documentId) {
-      // Note: moveDocumentDown method needs to be implemented in svg-store if needed
-      console.log('moveDocumentDown not implemented in svg-store');
+      // Note: moveDocumentDown method needs to be implemented in DocumentStore if needed
+      console.log('moveDocumentDown not implemented in DocumentStore');
     },
     
     cloneDocument(documentId) {
-      // Note: cloneDocument method needs to be implemented in svg-store if needed
-      console.log('cloneDocument not implemented in svg-store');
+      // Note: cloneDocument method needs to be implemented in DocumentStore if needed
+      console.log('cloneDocument not implemented in DocumentStore');
     },
     
     deleteDocument(documentId) {
-      // Note: deleteDocument method needs to be implemented in svg-store if needed
-      console.log('deleteDocument not implemented in svg-store');
+      // Note: deleteDocument method needs to be implemented in DocumentStore if needed
+      console.log('deleteDocument not implemented in DocumentStore');
     },
     
     isFirstDocument(doc) {
       // Check if this document has the lowest order value
-      return doc.ui.order === Math.min(...Object.values(this.svgStore.documents).map(d => d.ui.order));
+      return doc.ui.order === Math.min(...Object.values(this.documents).map(d => d.ui.order));
     },
     
     isLastDocument(doc) {
       // Check if this document has the highest order value
-      return doc.ui.order === Math.max(...Object.values(this.svgStore.documents).map(d => d.ui.order));
+      return doc.ui.order === Math.max(...Object.values(this.documents).map(d => d.ui.order));
     },
     
     openRenameDialog(doc) {
-      if (doc.disabled) return;
+      if (doc?.disabled) return;
       
       this.documentToRename = doc;
       this.newLayerName = doc.ui.displayName;
@@ -351,8 +381,14 @@ export default {
     
     confirmRename() {
       if (this.documentToRename && this.newLayerName.trim()) {
-        // Note: renameDocument method needs to be implemented in svg-store if needed
-        console.log('renameDocument not implemented in svg-store');
+        // Update the document name using floorplan3d instance
+        if (this.floorplan3d) {
+          this.floorplan3d.updateDocumentConfig(
+            this.documentToRename.id, 
+            'ui.displayName', 
+            this.newLayerName.trim()
+          );
+        }
         
         // Close the dialog
         this.cancelRename();
@@ -370,38 +406,46 @@ export default {
     },
     
     updateDocumentOpacity(documentId) {
-      const doc = this.svgStore.documents[documentId];
-      if (doc) {
-        // Note: updateDocumentLayerOpacity method needs to be implemented in svg-store if needed
-        console.log('updateDocumentLayerOpacity not implemented in svg-store');
+      const doc = this.documents[documentId];
+      if (doc && this.floorplan3d) {
+        // Use floorplan3d's updateDocumentConfig method
+        this.floorplan3d.updateDocumentConfig(
+          documentId, 
+          'docConfigs.layer.opacity.value', 
+          doc.docConfigs.layer.opacity.value
+        );
       }
     },
 
     toggleDocumentSelected(documentId) {
-      const doc = this.svgStore.documents[documentId];
-      if (doc.disabled) return;
+      const doc = this.documents[documentId];
+      if (doc?.disabled) return;
       
-      // Toggle selected state
-      doc.selected = !doc.selected;
+      // Toggle selected state using floorplan3d instance
+      if (this.floorplan3d) {
+        this.floorplan3d.toggleDocumentSelected(documentId);
+      }
     },
     
     toggle3DVisibility(documentId) {
       console.log("toggle3DVisibility started for document:", documentId);
-      const doc = this.svgStore.documents[documentId];
-      if (doc.disabled) return;
+      const doc = this.documents[documentId];
+      if (doc?.disabled) return;
       
-      // Toggle the show3D property directly in the document
-      doc.show3D = !doc.show3D;
+      // Toggle the show3D property using floorplan3d instance
+      if (this.floorplan3d) {
+        const newValue = !doc.show3D;
+        this.floorplan3d.updateDocumentConfig(documentId, 'show3D', newValue);
 
-      console.log("toggle3DVisibility doc:", JSON.parse(JSON.stringify(doc)) );
+        console.log("toggle3DVisibility doc:", JSON.parse(JSON.stringify(doc)));
 
-      if (doc.threejsContent && doc.threejsContent.objects) {
-        for(let obj of doc.threejsContent.objects) {
-          console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)) );
-          obj.visible = doc.show3D;
-        }   
+        if (doc.threejsContent && doc.threejsContent.objects) {
+          for(let obj of doc.threejsContent.objects) {
+            console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)));
+            obj.visible = newValue;
+          }   
+        }
       }
-
     }
   }
 };
