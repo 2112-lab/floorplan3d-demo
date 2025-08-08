@@ -141,9 +141,10 @@ export default {
         color: 'success',
         timeout: 3000,
       },
-      // Simple document storage now handled by floorplan3d instance
-      documents: {},
-      // Default configs for vector documents
+      // Layer storage - new terminology (documents is kept for backward compatibility)
+      layers: {},
+      documents: {}, // Legacy - kept for backward compatibility
+      // Default configs for vector layers
       defaultVectorConfigs: defaultVectorConfigs,
       defaultMetadata: defaultMetadata,
     };
@@ -158,40 +159,96 @@ export default {
       this.autoImportSvg();
     }, 500);
     
-    // Set up a watcher to sync documents from floorplan3d instance's internal store
-    this.$watch(() => this.threejsRenderer?.floorplan3d?.documentStore?.getState() || {}, (newState) => {
-      if (newState.documents) {
-        this.documents = { ...newState.documents };
+    // Set up a watcher to sync layers/documents from floorplan3d instance's internal store
+    this.$watch(() => this.threejsRenderer?.floorplan3d?.layerStore?.getState() || {}, (newState) => {
+      if (newState.layers) {
+        this.layers = { ...newState.layers };
+        this.documents = { ...newState.layers }; // Keep backward compatibility
       }
     }, { deep: true, immediate: true });
   },
   methods: {
-    // Simple document management methods that use floorplan3d's internal store
-    addDocument(doc_id, name, configs) {
-      // Check if document already exists to prevent duplication
-      if (this.documents[doc_id]) {
-        console.warn(`Document with ID ${doc_id} already exists. Skipping to prevent duplication.`);
+    // Layer management methods - New API
+    addLayer(layerId, name, configs) {
+      // Check if layer already exists to prevent duplication
+      if (this.layers[layerId]) {
+        console.warn(`Layer with ID ${layerId} already exists. Skipping to prevent duplication.`);
         return;
       }
       
       // Add to floorplan3d's internal store if available
       if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.addDocument(doc_id, name, configs);
+        this.threejsRenderer.floorplan3d.addLayer(layerId, name, configs);
       }
       
       // Sync to local storage for easy access
-      this.syncDocumentsFromFloorplan3d();
+      this.syncLayersFromFloorplan3d();
     },
 
-    syncDocumentsFromFloorplan3d() {
-      // Sync the floorplan3d internal store documents to local reactive data
-      if (this.threejsRenderer?.floorplan3d?.documentStore) {
-        this.documents = { ...this.threejsRenderer.floorplan3d.documentStore.documents };
+    syncLayersFromFloorplan3d() {
+      // Sync the floorplan3d internal store layers to local reactive data
+      if (this.threejsRenderer?.floorplan3d?.layerStore) {
+        this.layers = { ...this.threejsRenderer.floorplan3d.layerStore.layers };
+        this.documents = { ...this.layers }; // Keep backward compatibility
       }
     },
 
+    setLayerActive(layerId) {
+      // Use floorplan3d's internal store to set layer active
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.setLayerActive(layerId);
+      }
+      this.syncLayersFromFloorplan3d();
+    },
+
+    toggleLayerSelected(layerId) {
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.toggleLayerSelected(layerId);
+      }
+      this.syncLayersFromFloorplan3d();
+    },
+
+    clearAllLayers() {
+      // Clear floorplan3d internal store layers
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.clearAllLayers();
+      }
+      this.syncLayersFromFloorplan3d();
+    },
+
+    activateVectorLayers() {
+      if (this.threejsRenderer?.floorplan3d) {
+        this.threejsRenderer.floorplan3d.activateVectorLayers();
+      }
+    },
+
+    // Document management methods - Legacy API for backward compatibility
+    addDocument(doc_id, name, configs) {
+      return this.addLayer(doc_id, name, configs);
+    },
+
+    syncDocumentsFromFloorplan3d() {
+      return this.syncLayersFromFloorplan3d();
+    },
+
+    setDocumentActive(doc_id) {
+      return this.setLayerActive(doc_id);
+    },
+
+    toggleDocumentSelected(documentId) {
+      return this.toggleLayerSelected(documentId);
+    },
+
+    clearAllDocuments() {
+      return this.clearAllLayers();
+    },
+
+    activateVectorDocuments() {
+      return this.activateVectorLayers();
+    },
+
     getUniqueDisplayName(baseName) {
-      const existingNames = Object.values(this.documents).map(doc => doc.ui.displayName);
+      const existingNames = Object.values(this.layers).map(layer => layer.ui.displayName);
       
       if (!existingNames.includes(baseName)) {
         return baseName;
@@ -213,54 +270,31 @@ export default {
       return `${baseName} (${highestNumber})`;
     },
 
-    setDocumentActive(doc_id) {
-      // Use floorplan3d's internal store to set document active
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.setDocumentActive(doc_id);
-      }
-      this.syncDocumentsFromFloorplan3d();
-    },
-
-    toggleDocumentSelected(documentId) {
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.toggleDocumentSelected(documentId);
-      }
-      this.syncDocumentsFromFloorplan3d();
-    },
-
-    clearAllDocuments() {
-      // Clear floorplan3d internal store documents
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.clearAllDocuments();
-      }
-      this.syncDocumentsFromFloorplan3d();
-    },
-
-    // Extract shared logic for processing vector documents
-    async processVectorDocuments(sortedVectorDocs, successMessage) {
-      console.log('processVectorDocuments called with', sortedVectorDocs.length, 'documents');
+    // Extract shared logic for processing vector layers (renamed from documents)
+    async processVectorLayers(sortedVectorLayers, successMessage) {
+      console.log('processVectorLayers called with', sortedVectorLayers.length, 'layers');
       
-      // Process vector documents (rooms and walls) - using floorplan3d internal store
-      for (let doc of sortedVectorDocs) {
-        // Check if document with this ID already exists (prevents duplication)
-        if (this.documents[doc.id]) {
-          console.log(`Document ${doc.id} already exists, skipping to prevent duplication`);
+      // Process vector layers (rooms and walls) - using floorplan3d internal store
+      for (let layer of sortedVectorLayers) {
+        // Check if layer with this ID already exists (prevents duplication)
+        if (this.layers[layer.id]) {
+          console.log(`Layer ${layer.id} already exists, skipping to prevent duplication`);
           continue;
         }
         
-        console.log(`Processing document ${doc.id} (${doc.name}):`, {
-          hasSvgPath: !!doc.svgPath,
-          hasSvgPolyline: !!doc.svgPolyline,
-          svgPathLength: doc.svgPath ? doc.svgPath.length : 0,
-          svgPolylineLength: doc.svgPolyline ? doc.svgPolyline.length : 0
+        console.log(`Processing layer ${layer.id} (${layer.name}):`, {
+          hasSvgPath: !!layer.svgPath,
+          hasSvgPolyline: !!layer.svgPolyline,
+          svgPathLength: layer.svgPath ? layer.svgPath.length : 0,
+          svgPolylineLength: layer.svgPolyline ? layer.svgPolyline.length : 0
         });
         
-        // Add the document to the internal store preserving the SVG content from parser
-        this.addDocument(doc.id, doc.name, {
-          ...doc,
+        // Add the layer to the internal store preserving the SVG content from parser
+        this.addLayer(layer.id, layer.name, {
+          ...layer,
           ui: {
-            ...doc.ui,
-            order: doc.ui.order // Use the order assigned by the parser
+            ...layer.ui,
+            order: layer.ui.order // Use the order assigned by the parser
           },
           // Preserve the SVG content from the parser instead of creating empty svg object
           svg: {
@@ -273,23 +307,21 @@ export default {
         console.log(`Document ${doc.id} added to store`);
       }
 
-      // Activate all vector documents after processing
-      this.activateVectorDocuments();
+      // Activate all vector layers after processing
+      this.activateVectorLayers();
       this.showSnackbar(successMessage, 'success');
     },
 
-    // Extract shared logic for activating vector documents
-    activateVectorDocuments() {
-      if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.activateVectorDocuments();
-      }
+    // Legacy method for backward compatibility
+    async processVectorDocuments(sortedVectorDocs, successMessage) {
+      return this.processVectorLayers(sortedVectorDocs, successMessage);
     },
 
     async autoImportSvg() {
       try {
-        // Check if documents already exist (prevents duplication during hot reload)
-        if (Object.keys(this.documents).length > 0) {
-          console.log('Documents already exist, skipping auto-import to prevent duplication');
+        // Check if layers already exist (prevents duplication during hot reload)
+        if (Object.keys(this.layers).length > 0) {
+          console.log('Layers already exist, skipping auto-import to prevent duplication');
           return;
         }
         
@@ -309,7 +341,7 @@ export default {
           const result = await this.threejsRenderer.floorplan3d.importAndStoreDocuments(svgContent);
           console.log('SVG import completed:', result);
           
-          this.syncDocumentsFromFloorplan3d();
+          this.syncLayersFromFloorplan3d();
           this.showSnackbar('FP3D-00-08.svg imported successfully', 'success');
         } else {
           throw new Error('Floorplan3D instance not available');
@@ -331,7 +363,7 @@ export default {
         
         // handle svg upload
         if(result.type === "svg"){
-          this.syncDocumentsFromFloorplan3d();
+          this.syncLayersFromFloorplan3d();
           this.showSnackbar('SVG file imported successfully', 'success');
         } else {
           // For non-SVG files, handle as before
@@ -344,14 +376,14 @@ export default {
       }
     },
 
-    // Mock methods for the new Tools panel
+    // Scene control methods
     resetScene() {
-      if(Object.keys(this.documents).length === 0) {
+      if(Object.keys(this.layers).length === 0) {
         return;
       }
 
-      // Use the new clearAllDocuments method
-      this.clearAllDocuments();
+      // Use the new clearAllLayers method
+      this.clearAllLayers();
       
       this.showSnackbar('Scene reset successfully', 'success');
     },
@@ -362,48 +394,62 @@ export default {
       this.snackbar.show = true;
     },
 
-    // Method to render SVG to the 3D scene
-    renderDocumentToScene(documentId, svgContent) {
+    // Method to render SVG to the 3D scene (updated for layers)
+    renderLayerToScene(layerId, svgContent) {
       // Access the floorplan3d instance through the threejs renderer
       const floorplan3d = this.threejsRenderer?.floorplan3d;
       
       if (floorplan3d && svgContent) {
-        console.log(`Rendering document ${documentId} to 3D scene`);
-        floorplan3d.renderSvgToScene(svgContent, documentId);
+        console.log(`Rendering layer ${layerId} to 3D scene`);
+        floorplan3d.renderSvgToScene(svgContent, layerId);
       } else {
         console.warn('Cannot render to scene: floorplan3d instance or SVG content not available');
       }
     },
 
-    // Method to generate SVG from objects and render to 3D scene
-    generateAndRenderSvg(documentId) {
+    // Legacy method for backward compatibility
+    renderDocumentToScene(documentId, svgContent) {
+      return this.renderLayerToScene(documentId, svgContent);
+    },
+
+    // Method to generate SVG from objects and render to 3D scene (updated for layers)
+    generateAndRenderSvg(layerId) {
       if (this.threejsRenderer?.floorplan3d) {
-        this.threejsRenderer.floorplan3d.generateAndRenderSvg(documentId);
+        this.threejsRenderer.floorplan3d.generateAndRenderSvg(layerId);
       }
     },
 
-    // Method to regenerate SVG for the currently active document
+    // Method to regenerate SVG for the currently active layer
     updateActiveSvg() {
-      const activeDoc = this.getActiveDocument();
-      if (activeDoc && activeDoc.metadata.category === "vector") {
-        this.generateAndRenderSvg(activeDoc.id);
+      const activeLayer = this.getActiveLayer();
+      if (activeLayer && activeLayer.metadata.category === "vector") {
+        this.generateAndRenderSvg(activeLayer.id);
       }
     },
 
-    // Helper methods for document management
+    // Helper methods for layer management
+    getLayer(layerId) {
+      return this.layers[layerId];
+    },
+
+    getActiveLayer() {
+      const activeLayer = Object.values(this.layers).find(layer => layer.active);
+      if (!activeLayer) return null;
+      
+      const layerId = Object.keys(this.layers).find(key => this.layers[key].active);
+      return {
+        ...activeLayer,
+        id: layerId
+      };
+    },
+
+    // Legacy helper methods for backward compatibility
     getDocument(documentId) {
-      return this.documents[documentId];
+      return this.getLayer(documentId);
     },
 
     getActiveDocument() {
-      const activeDoc = Object.values(this.documents).find(doc => doc.active);
-      if (!activeDoc) return null;
-      
-      const docId = Object.keys(this.documents).find(key => this.documents[key].active);
-      return {
-        ...activeDoc,
-        id: docId
-      };
+      return this.getActiveLayer();
     },
 
   },
