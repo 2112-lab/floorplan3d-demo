@@ -25,7 +25,7 @@
         <!-- LayersPanel positioned in corner with padding -->
         <div style="position: absolute; top: 10px; left: 10px; z-index: 50; width: 280px;">
           <div style="position: relative; background-color: white; border: 1px solid #aaa; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
-            <LayersPanel />
+            <LayersPanel :floorplan3d="floorplan3d" />
           </div>
         </div>
       </div>   
@@ -162,14 +162,6 @@ export default {
     this.threejsRenderer = this.$refs.threejsRenderer;
     
     // Floorplan3D will be initialized when container is ready via onContainerReady event
-    
-    // Set up a watcher to sync layers/documents from floorplan3d instance's internal store
-    this.$watch(() => this.floorplan3d?.layerStore?.getState() || {}, (newState) => {
-      if (newState.layers) {
-        this.layers = { ...newState.layers };
-        this.documents = { ...newState.layers }; // Keep backward compatibility
-      }
-    }, { deep: true, immediate: true });
   },
   beforeDestroy() {
     // Cleanup Floorplan3D instance when component is destroyed

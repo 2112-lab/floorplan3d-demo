@@ -20,21 +20,21 @@
         v-show="!isPanelCollapsed"
       >
         <div 
-          v-for="doc in sortedDocuments" 
-          :key="doc.id"
+          v-for="layer in sortedLayers" 
+          :key="layer.id"
           class="layer-item"
-          :class="{ 'active': doc.active, 'disabled': doc.disabled }"
-          @click="selectDocument(doc.id)"
+          :class="{ 'active': layer.active, 'disabled': layer.disabled }"
+          @click="selectLayer(layer.id)"
         >
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center">              
               <!-- Checkbox for "selected" state -->
               <v-checkbox
-                v-model="doc.selected"
+                v-model="layer.selected"
                 density="compact"
                 hide-details
                 class="mr-0 mt-0 mb-0 ml-0 compact-checkbox"
-                @click.stop="toggleDocumentSelected(doc.id)"
+                @click.stop="toggleLayerSelected(layer.id)"
               ></v-checkbox>
 
               <!-- 3D Toggle Icon -->
@@ -42,30 +42,30 @@
                 color="black" 
                 size="x-small"
                 class="mr-1"
-                @click.stop="toggle3DVisibility(doc.id)"
-                :disabled="doc.disabled || doc.metadata.category !== 'vector'"
+                @click.stop="toggle3DVisibility(layer.id)"
+                :disabled="layer.disabled || layer.metadata.category !== 'vector'"
                 style="cursor: pointer;"
               >
-                {{ doc.show3D ? 'mdi-video-3d' : 'mdi-video-3d-off' }}
+                {{ layer.show3D ? 'mdi-video-3d' : 'mdi-video-3d-off' }}
               </v-icon>              <span 
-                :class="{ 'text--disabled': doc.disabled }"
+                :class="{ 'text--disabled': layer.disabled }"
                 class="small-text"
-              >{{ doc.ui.displayName }}</span>
+              >{{ layer.ui.displayName }}</span>
               <v-tooltip location="top">
                 <template v-slot:activator="{ props }">
                   <v-icon 
                     size="x-small" 
                     class="ml-1" 
-                    :color="doc.metadata.category === 'vector' ? 'blue-grey' : 'blue-grey'"
+                    :color="layer.metadata.category === 'vector' ? 'blue-grey' : 'blue-grey'"
                     v-bind="props"
                   >
-                    {{ doc.metadata.category === 'vector' ? 'mdi-vector-square' : 'mdi-image' }}
+                    {{ layer.metadata.category === 'vector' ? 'mdi-vector-square' : 'mdi-image' }}
                   </v-icon>
                 </template>
-                <span>{{ doc.metadata.category === 'vector' ? 'Vector' : 'Raster' }}</span>
+                <span>{{ layer.metadata.category === 'vector' ? 'Vector' : 'Raster' }}</span>
               </v-tooltip>
               <!-- Secondary icon for SVG type (path/polyline) -->              
-               <v-tooltip v-if="doc.metadata.category === 'vector' && doc.metadata.subtype" location="top">
+               <v-tooltip v-if="layer.metadata.category === 'vector' && layer.metadata.subtype" location="top">
                 <template v-slot:activator="{ props }">
                   <v-icon 
                     size="x-small" 
@@ -73,20 +73,20 @@
                     color="blue-grey-lighten-1"
                     v-bind="props"
                   >
-                    {{ doc.metadata.subtype === 'paths' ? 'mdi-vector-curve' : doc.metadata.subtype === 'polylines' ? 'mdi-vector-polyline' : '' }}
+                    {{ layer.metadata.subtype === 'paths' ? 'mdi-vector-curve' : layer.metadata.subtype === 'polylines' ? 'mdi-vector-polyline' : '' }}
                   </v-icon>
                 </template>
-                <span>{{ doc.metadata.subtype === 'paths' ? 'Paths' : doc.metadata.subtype === 'polylines' ? 'Polylines' : '' }}</span>
+                <span>{{ layer.metadata.subtype === 'paths' ? 'Paths' : layer.metadata.subtype === 'polylines' ? 'Polylines' : '' }}</span>
               </v-tooltip>
             </div>
-            <div class="layer-controls" :class="{ 'visible': doc.ui.menuOpen }">
+            <div class="layer-controls" :class="{ 'visible': layer.ui.menuOpen }">
               <!-- Dots vertical menu -->
               <v-menu
-                v-model="doc.ui.menuOpen"
+                v-model="layer.ui.menuOpen"
                 :close-on-content-click="true"
                 location="end"
                 offset="5"
-                @close="handleMenuClose(doc.id)"
+                @close="handleMenuClose(layer.id)"
               >
                 <template v-slot:activator="{ props }">                  
                   <v-btn 
@@ -95,15 +95,15 @@
                     size="x-small" 
                     density="compact"
                     class="layer-btn"
-                    :disabled="doc.disabled"
+                    :disabled="layer.disabled"
                     v-bind="props"
                     @click.stop
                   ></v-btn>
                 </template>
                 <v-list density="compact">
                   <v-list-item 
-                    @click="moveDocumentUp(doc.id)"
-                    :disabled="isFirstDocument(doc) || doc.disabled"
+                    @click="moveLayerUp(layer.id)"
+                    :disabled="isFirstLayer(layer) || layer.disabled"
                   >
                     <template v-slot:prepend>
                       <v-icon size="small">mdi-arrow-up</v-icon>
@@ -112,8 +112,8 @@
                   </v-list-item>
                   
                   <v-list-item 
-                    @click="moveDocumentDown(doc.id)"
-                    :disabled="isLastDocument(doc) || doc.disabled || sortedDocuments.length == 1"
+                    @click="moveLayerDown(layer.id)"
+                    :disabled="isLastLayer(layer) || layer.disabled || sortedLayers.length == 1"
                   >
                     <template v-slot:prepend>
                       <v-icon size="small">mdi-arrow-down</v-icon>
@@ -124,8 +124,8 @@
                   <v-divider></v-divider>
                   
                   <v-list-item 
-                    @click="openRenameDialog(doc)"
-                    :disabled="doc.disabled"
+                    @click="openRenameDialog(layer)"
+                    :disabled="layer.disabled"
                   >
                     <template v-slot:prepend>
                       <v-icon size="small">mdi-pencil</v-icon>
@@ -134,8 +134,8 @@
                   </v-list-item>
                   
                   <v-list-item 
-                    @click="cloneDocument(doc.id)"
-                    :disabled="doc.disabled"
+                    @click="cloneLayer(layer.id)"
+                    :disabled="layer.disabled"
                   >
                     <template v-slot:prepend>
                       <v-icon size="small">mdi-content-copy</v-icon>
@@ -144,8 +144,8 @@
                   </v-list-item>
                   
                   <v-list-item 
-                    @click="deleteDocument(doc.id)"
-                    :disabled="doc.disabled"
+                    @click="deleteLayer(layer.id)"
+                    :disabled="layer.disabled"
                     class="text-error"
                   >
                     <template v-slot:prepend>
@@ -163,23 +163,23 @@
             <v-tooltip location="top">
               <template v-slot:activator="{}">
               <div style="width:24px; text-align:right; margin-right:2px">
-                {{(doc.docConfigs.layer.opacity.value * 100).toFixed(0)}}
+                {{(layer.layerConfigs.layer.opacity.value * 100).toFixed(0)}}
               </div>
               
               </template>
-              <span>Opacity: {{ Math.round(doc.docConfigs.layer.opacity.value * 100) }}%</span>
+              <span>Opacity: {{ Math.round(layer.layerConfigs.layer.opacity.value * 100) }}%</span>
             </v-tooltip>
             <v-slider
-              v-model="doc.docConfigs.layer.opacity.value"
+              v-model="layer.layerConfigs.layer.opacity.value"
               :min="0"
               :max="1"
               :step="0.01"
-              :disabled="doc.disabled"
+              :disabled="layer.disabled"
               density="compact"
               hide-details
               class="opacity-slider"
               @click.stop
-              @input="updateDocumentOpacity(doc.id)"
+              @input="updateLayerOpacity(layer.id)"
               thumb-size="1"
             ></v-slider>
           </div> -->
@@ -232,41 +232,58 @@
 
 <script>
 export default {
+  props: {
+    floorplan3d: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return {
-      documents: {},
+      layers: {},
       isPanelCollapsed: false,
       renameDialogVisible: false,
       newLayerName: '',
-      documentToRename: null
+      layerToRename: null
     };
   },
   computed: {
-    areAllDocumentsInvisible() {
-      // Consider a document invisible if its opacity is 0
-      return Object.values(this.documents).every(doc => 
-        doc.docConfigs.layer.opacity.value === 0
+    areAllLayersInvisible() {
+      // Consider a layer invisible if its opacity is 0
+      return Object.values(this.layers).every(layer => 
+        layer.layerConfigs.layer.opacity.value === 0
       );
     },
     
-    // Get sorted documents for display
-    sortedDocuments() {
-      // Create a copy of documents object as array with id included
-      return Object.entries(this.documents)
-        .filter(([id, doc]) => {
-          // Filter out documents with names "grid" or "selection"
-          return !["grid", "selection"].includes(doc.name.toLowerCase());
+    // Get sorted layers for display
+    sortedLayers() {
+      // Create a copy of layers object as array with id included
+      return Object.entries(this.layers)
+        .filter(([id, layer]) => {
+          // Filter out layers with names "grid" or "selection"
+          return !["grid", "selection"].includes(layer.name?.toLowerCase() || '');
         })
-        .map(([id, doc]) => ({
-          ...doc,
-          id // Include the document id (object key) in each document object
+        .map(([id, layer]) => ({
+          ...layer,
+          id // Include the layer id (object key) in each layer object
         }))
         .sort((a, b) => a.ui.order - b.ui.order);
-    },
-    
-    // Get floorplan3d instance from parent
-    floorplan3d() {
-      return this.$parent?.threejsRenderer?.floorplan3d;
+    }
+  },
+  watch: {
+    // Watch for changes in the floorplan3d prop and set up layer watcher
+    floorplan3d: {
+      handler(newVal, oldVal) {
+        if (newVal && newVal !== oldVal) {
+          // Clean up old subscription if it exists
+          if (this.unsubscribeLayers) {
+            this.unsubscribeLayers();
+          }
+          // Set up new layer watcher
+          this.setupLayerWatcher();
+        }
+      },
+      immediate: true
     }
   },
   mounted() {
@@ -276,33 +293,33 @@ export default {
     // Listen for the custom close-v-menus event from svg renderer
     document.addEventListener('close-v-menus', this.closeAllMenus);
     
-    // Set up watcher for document changes from floorplan3d
-    this.setupDocumentWatcher();
+    // Set up watcher for layer changes from floorplan3d
+    this.setupLayerWatcher();
   },
   beforeUnmount() {
     // Remove event listeners when component is destroyed
     document.removeEventListener('click', this.handleOutsideClick);
     document.removeEventListener('close-v-menus', this.closeAllMenus);
     
-    // Cleanup document subscription
-    if (this.unsubscribeDocuments) {
-      this.unsubscribeDocuments();
+    // Cleanup layer subscription
+    if (this.unsubscribeLayers) {
+      this.unsubscribeLayers();
     }
   },
   methods: {
-    setupDocumentWatcher() {
-      // Subscribe to document changes from floorplan3d instance
+    setupLayerWatcher() {
+      // Subscribe to layer changes from floorplan3d instance
       if (this.floorplan3d?.layerStore) {
-        this.unsubscribeDocuments = this.floorplan3d.layerStore.subscribe((state) => {
-          this.documents = { ...state.documents };
+        this.unsubscribeLayers = this.floorplan3d.layerStore.subscribe((state) => {
+          this.layers = { ...state.layers };
         });
         
         // Initial sync
-        this.documents = { ...this.floorplan3d.layerStore.documents };
+        this.layers = { ...this.floorplan3d.layerStore.layers };
       } else {
         // Retry after a short delay if floorplan3d is not ready
         setTimeout(() => {
-          this.setupDocumentWatcher();
+          this.setupLayerWatcher();
         }, 100);
       }
     },
@@ -317,9 +334,9 @@ export default {
     
     closeAllMenus() {
       // Close all open menus
-      for (const docId in this.documents) {
-        if (this.documents[docId].ui?.menuOpen) {
-          this.documents[docId].ui.menuOpen = false;
+      for (const layerId in this.layers) {
+        if (this.layers[layerId].ui?.menuOpen) {
+          this.layers[layerId].ui.menuOpen = false;
         }
       }
     },
@@ -331,60 +348,60 @@ export default {
       this.isPanelCollapsed = !this.isPanelCollapsed;
     },
     
-    selectDocument(documentId) {
-      const doc = this.documents[documentId];
-      if (doc?.disabled) return;
+    selectLayer(layerId) {
+      const layer = this.layers[layerId];
+      if (layer?.disabled) return;
       
-      // Set the document as active using floorplan3d instance
+      // Set the layer as active using floorplan3d instance
       if (this.floorplan3d) {
-        this.floorplan3d.setDocumentActive(documentId);
+        this.floorplan3d.setLayerActive(layerId);
       }
     },
     
-    moveDocumentUp(documentId) {
-      // Note: moveDocumentUp method needs to be implemented in layerStore if needed
-      console.log('moveDocumentUp not implemented in layerStore');
+    moveLayerUp(layerId) {
+      // Note: moveLayerUp method needs to be implemented in layerStore if needed
+      console.log('moveLayerUp not implemented in layerStore');
     },
     
-    moveDocumentDown(documentId) {
-      // Note: moveDocumentDown method needs to be implemented in layerStore if needed
-      console.log('moveDocumentDown not implemented in layerStore');
+    moveLayerDown(layerId) {
+      // Note: moveLayerDown method needs to be implemented in layerStore if needed
+      console.log('moveLayerDown not implemented in layerStore');
     },
     
-    cloneDocument(documentId) {
-      // Note: cloneDocument method needs to be implemented in layerStore if needed
-      console.log('cloneDocument not implemented in layerStore');
+    cloneLayer(layerId) {
+      // Note: cloneLayer method needs to be implemented in layerStore if needed
+      console.log('cloneLayer not implemented in layerStore');
     },
     
-    deleteDocument(documentId) {
-      // Note: deleteDocument method needs to be implemented in layerStore if needed
-      console.log('deleteDocument not implemented in layerStore');
+    deleteLayer(layerId) {
+      // Note: deleteLayer method needs to be implemented in layerStore if needed
+      console.log('deleteLayer not implemented in layerStore');
     },
     
-    isFirstDocument(doc) {
-      // Check if this document has the lowest order value
-      return doc.ui.order === Math.min(...Object.values(this.documents).map(d => d.ui.order));
+    isFirstLayer(layer) {
+      // Check if this layer has the lowest order value
+      return layer.ui.order === Math.min(...Object.values(this.layers).map(l => l.ui.order));
     },
     
-    isLastDocument(doc) {
-      // Check if this document has the highest order value
-      return doc.ui.order === Math.max(...Object.values(this.documents).map(d => d.ui.order));
+    isLastLayer(layer) {
+      // Check if this layer has the highest order value
+      return layer.ui.order === Math.max(...Object.values(this.layers).map(l => l.ui.order));
     },
     
-    openRenameDialog(doc) {
-      if (doc?.disabled) return;
+    openRenameDialog(layer) {
+      if (layer?.disabled) return;
       
-      this.documentToRename = doc;
-      this.newLayerName = doc.ui.displayName;
+      this.layerToRename = layer;
+      this.newLayerName = layer.ui.displayName;
       this.renameDialogVisible = true;
     },
     
     confirmRename() {
-      if (this.documentToRename && this.newLayerName.trim()) {
-        // Update the document name using floorplan3d instance
+      if (this.layerToRename && this.newLayerName.trim()) {
+        // Update the layer name using floorplan3d instance
         if (this.floorplan3d) {
-          this.floorplan3d.updateDocumentConfig(
-            this.documentToRename.id, 
+          this.floorplan3d.updateLayerConfig(
+            this.layerToRename.id, 
             'ui.displayName', 
             this.newLayerName.trim()
           );
@@ -398,49 +415,49 @@ export default {
     cancelRename() {
       this.renameDialogVisible = false;
       this.newLayerName = '';
-      this.documentToRename = null;
+      this.layerToRename = null;
     },
     
-    handleMenuClose(documentId) {
+    handleMenuClose(layerId) {
       // No additional actions needed
     },
     
-    updateDocumentOpacity(documentId) {
-      const doc = this.documents[documentId];
-      if (doc && this.floorplan3d) {
-        // Use floorplan3d's updateDocumentConfig method
-        this.floorplan3d.updateDocumentConfig(
-          documentId, 
-          'docConfigs.layer.opacity.value', 
-          doc.docConfigs.layer.opacity.value
+    updateLayerOpacity(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Use floorplan3d's updateLayerConfig method
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.layer.opacity.value', 
+          layer.layerConfigs.layer.opacity.value
         );
       }
     },
 
-    toggleDocumentSelected(documentId) {
-      const doc = this.documents[documentId];
-      if (doc?.disabled) return;
+    toggleLayerSelected(layerId) {
+      const layer = this.layers[layerId];
+      if (layer?.disabled) return;
       
       // Toggle selected state using floorplan3d instance
       if (this.floorplan3d) {
-        this.floorplan3d.toggleDocumentSelected(documentId);
+        this.floorplan3d.toggleLayerSelected(layerId);
       }
     },
     
-    toggle3DVisibility(documentId) {
-      console.log("toggle3DVisibility started for document:", documentId);
-      const doc = this.documents[documentId];
-      if (doc?.disabled) return;
+    toggle3DVisibility(layerId) {
+      console.log("toggle3DVisibility started for layer:", layerId);
+      const layer = this.layers[layerId];
+      if (layer?.disabled) return;
       
       // Toggle the show3D property using floorplan3d instance
       if (this.floorplan3d) {
-        const newValue = !doc.show3D;
-        this.floorplan3d.updateDocumentConfig(documentId, 'show3D', newValue);
+        const newValue = !layer.show3D;
+        this.floorplan3d.updateLayerConfig(layerId, 'show3D', newValue);
 
-        console.log("toggle3DVisibility doc:", JSON.parse(JSON.stringify(doc)));
+        console.log("toggle3DVisibility layer:", JSON.parse(JSON.stringify(layer)));
 
-        if (doc.threejsContent && doc.threejsContent.objects) {
-          for(let obj of doc.threejsContent.objects) {
+        if (layer.threejsContent && layer.threejsContent.objects) {
+          for(let obj of layer.threejsContent.objects) {
             console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)));
             obj.visible = newValue;
           }   
