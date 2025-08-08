@@ -127,7 +127,7 @@
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import { cloneDeep } from 'lodash';
-import { SvgUtils, defaultVectorConfigs, defaultMetadata } from "@2112-lab/floorplan3d";
+import { defaultVectorConfigs, defaultMetadata } from "@2112-lab/floorplan3d";
 import Floorplan3D, { SvgDocumentParser } from "@2112-lab/floorplan3d";
 import { markRaw } from 'vue';
 

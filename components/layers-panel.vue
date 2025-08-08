@@ -292,13 +292,13 @@ export default {
   methods: {
     setupDocumentWatcher() {
       // Subscribe to document changes from floorplan3d instance
-      if (this.floorplan3d?.documentStore) {
-        this.unsubscribeDocuments = this.floorplan3d.documentStore.subscribe((state) => {
+      if (this.floorplan3d?.layerStore) {
+        this.unsubscribeDocuments = this.floorplan3d.layerStore.subscribe((state) => {
           this.documents = { ...state.documents };
         });
         
         // Initial sync
-        this.documents = { ...this.floorplan3d.documentStore.documents };
+        this.documents = { ...this.floorplan3d.layerStore.documents };
       } else {
         // Retry after a short delay if floorplan3d is not ready
         setTimeout(() => {
@@ -342,23 +342,23 @@ export default {
     },
     
     moveDocumentUp(documentId) {
-      // Note: moveDocumentUp method needs to be implemented in DocumentStore if needed
-      console.log('moveDocumentUp not implemented in DocumentStore');
+      // Note: moveDocumentUp method needs to be implemented in layerStore if needed
+      console.log('moveDocumentUp not implemented in layerStore');
     },
     
     moveDocumentDown(documentId) {
-      // Note: moveDocumentDown method needs to be implemented in DocumentStore if needed
-      console.log('moveDocumentDown not implemented in DocumentStore');
+      // Note: moveDocumentDown method needs to be implemented in layerStore if needed
+      console.log('moveDocumentDown not implemented in layerStore');
     },
     
     cloneDocument(documentId) {
-      // Note: cloneDocument method needs to be implemented in DocumentStore if needed
-      console.log('cloneDocument not implemented in DocumentStore');
+      // Note: cloneDocument method needs to be implemented in layerStore if needed
+      console.log('cloneDocument not implemented in layerStore');
     },
     
     deleteDocument(documentId) {
-      // Note: deleteDocument method needs to be implemented in DocumentStore if needed
-      console.log('deleteDocument not implemented in DocumentStore');
+      // Note: deleteDocument method needs to be implemented in layerStore if needed
+      console.log('deleteDocument not implemented in layerStore');
     },
     
     isFirstDocument(doc) {
