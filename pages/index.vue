@@ -69,7 +69,7 @@
                   Control and manipulate the 3D scene
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
-                  <code class="code-dark">importFileWithNotifications(), resetScene(), importAndStoreDocuments()</code>
+                  <code class="code-dark">importFile(), resetScene()</code>
                 </div>
                 
                 <v-btn
@@ -470,7 +470,7 @@ export default {
       }
       
       try {
-        await this.floorplan3d.importFileWithNotifications();
+        await this.floorplan3d.importFile();
       } catch (error) {
         // Error notifications are handled by floorplan3d
         console.error("Error importing file:", error);

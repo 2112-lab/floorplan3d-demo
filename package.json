@@ -11,7 +11,7 @@
     "fp": "npm install @2112-lab/floorplan3d@latest"
   },
   "dependencies": {
-    "@2112-lab/floorplan3d": "^1.0.9",
+    "@2112-lab/floorplan3d": "^1.0.10",
     "@mdi/font": "^7.4.47",
     "@nuxtjs/toast": "^3.3.1",
     "@pinia/nuxt": "^0.10.1",
