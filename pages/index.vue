@@ -69,7 +69,7 @@
                   Control and manipulate the 3D scene
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
-                  <code class="code-dark">importFileWithNotifications(), resetScene()</code>
+                  <code class="code-dark">importFileWithNotifications(), resetScene(), importAndStoreDocuments()</code>
                 </div>
                 
                 <v-btn
@@ -229,17 +229,6 @@
                   Update Config
                 </v-btn>
                 
-                <v-btn
-                  color="info"
-                  @click="inspectLayerConfigExample"
-                  :disabled="!floorplan3d || !selectedConfigLayerId"
-                  elevation="2"
-                  block
-                  outlined
-                >
-                  <v-icon small class="mr-1">mdi-information</v-icon>
-                  Inspect Layer Config
-                </v-btn>
               </v-card-text>
             </v-expand-transition>
           </v-card>
@@ -404,9 +393,10 @@ export default {
         // Make sure the animation is running
         this.floorplan3d.startAnimation();
 
-        // Auto-import the default SVG file after initialization
+        // Auto-import the default SVG file after initialization (changed to test base64 image)
         setTimeout(() => {
-          this.floorplan3d.autoImportSvg();
+          console.log('=== CALLING AUTO IMPORT FROM VUE ===');
+          this.floorplan3d.autoImportSvg('FP3D-00-07.svg'); // This has base64 image
           // Set rooms layer opacity after auto-import
           setTimeout(() => {
             this.setRoomsLayerOpacity(0.75);
@@ -494,6 +484,58 @@ export default {
       }
       
       this.floorplan3d.resetScene();
+    },
+
+    // Load the specific SVG file with base64 image
+    async loadBase64ImageSvg() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not initialized', 'error');
+        return;
+      }
+      
+      try {
+        this.showSnackbar('Starting base64 image load...', 'info');
+        
+        // Load the FP3D-00-07.svg file specifically
+        const response = await fetch('/inkscape-samples/FP3D-00-07.svg');
+        if (!response.ok) {
+          throw new Error(`Failed to load SVG: ${response.statusText}`);
+        }
+        
+        const svgContent = await response.text();
+        console.log('Loaded FP3D-00-07.svg content:', svgContent.substring(0, 200) + '...');
+        this.showSnackbar(`SVG loaded, length: ${svgContent.length}`, 'info');
+        
+        // Force clear existing layers
+        this.floorplan3d.resetScene(); 
+        
+        // Check if there are image elements in the SVG
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
+        const images = svgDoc.querySelectorAll("image");
+        this.showSnackbar(`Found ${images.length} image elements in SVG`, 'info');
+        
+        if (images.length > 0) {
+          const firstImage = images[0];
+          let href = firstImage.getAttribute('xlink:href') || firstImage.getAttribute('href');
+          
+          if (href) {
+            const hasEntities = href.includes('&#10;') || href.includes('&#13;');
+            const cleanHref = href.replace(/&#10;/g, '').replace(/&#13;/g, '');
+            this.showSnackbar(`Image href found (entities: ${hasEntities}, length: ${cleanHref.length})`, 'info');
+          } else {
+            this.showSnackbar('Image element has no href attribute', 'warning');
+          }
+        }
+        
+        // Use the floorplan3d method to parse and import the SVG
+        await this.floorplan3d.importAndStoreDocuments(svgContent);
+        
+        this.showSnackbar('FP3D-00-07.svg with base64 image loaded successfully!', 'success');
+      } catch (error) {
+        console.error('Error loading base64 image SVG:', error);
+        this.showSnackbar(`Error loading SVG: ${error.message}`, 'error');
+      }
     },
 
     // Helper method to find layer by name pattern (case-insensitive)
@@ -650,30 +692,6 @@ export default {
       } catch (error) {
         console.error('Error updating layer config:', error);
         this.showSnackbar(`Error updating layer config: ${error.message}`, 'error');
-      }
-    },
-
-    inspectLayerConfigExample() {
-      if (!this.floorplan3d || !this.selectedConfigLayerId) {
-        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        const layer = this.floorplan3d.layerStore.layers[this.selectedConfigLayerId];
-        if (layer) {
-          console.log('Layer configuration:', layer);
-          console.log('Layer configs:', layer.layerConfigs);
-          if (layer.layerConfigs?.extrusion) {
-            console.log('Extrusion config:', layer.layerConfigs.extrusion);
-          }
-          this.showSnackbar(`Layer config logged to console`, 'info');
-        } else {
-          this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
-        }
-      } catch (error) {
-        console.error('Error inspecting layer config:', error);
-        this.showSnackbar(`Error inspecting layer: ${error.message}`, 'error');
       }
     },
 
