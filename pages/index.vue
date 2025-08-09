@@ -311,7 +311,7 @@ export default {
       configValue: '',
       configPaths: [
         { name: 'Extrusion Start', path: 'layerConfigs.extrusion.start.value' },
-        { name: 'Extrusion End', path: 'layerConfigs.extrusion.end.value' }
+        { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' }
       ],
     };
   },
