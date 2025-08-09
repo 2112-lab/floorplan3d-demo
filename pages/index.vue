@@ -516,7 +516,7 @@ export default {
           // Set rooms layer opacity after auto-import
           setTimeout(() => {
             this.setRoomsLayerOpacity(0.75);
-          }, 100);
+          }, 150);
         }, 500);
 
         console.log('Floorplan3D initialized successfully');
