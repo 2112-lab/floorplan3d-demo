@@ -339,6 +339,16 @@ export default {
         this.floorplan3d.setLayerActive(layerId);
       }
     },
+
+    toggleLayerSelected(layerId) {
+      const layer = this.layers[layerId];
+      if (layer?.disabled) return;
+      
+      // Toggle the layer selection using floorplan3d instance
+      if (this.floorplan3d) {
+        this.floorplan3d.toggleLayerSelected(layerId);
+      }
+    },
     
     openRenameDialog(layer) {
       if (layer?.disabled) return;

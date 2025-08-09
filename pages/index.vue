@@ -233,6 +233,94 @@
             </v-expand-transition>
           </v-card>
 
+          <!-- Export Selected Layers Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer pa-2" 
+              @click="expandedSections.exportLayers = !expandedSections.exportLayers"
+            >
+              <v-icon small class="mr-2" color="purple">mdi-download</v-icon>
+              <span class="font-weight-medium">Export Selected Layers</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.exportLayers }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.exportLayers" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Export Three.js geometry from selected layers
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">exportSelectedLayersAsGLTF()</code>
+                </div>
+                
+                <!-- Selected layers display -->
+                <v-chip-group class="mb-3">
+                  <v-chip
+                    v-for="layer in selectedLayersForExport"
+                    :key="layer.id"
+                    small
+                    color="purple"
+                    text-color="white"
+                    class="ma-1"
+                  >
+                    <v-icon small class="mr-1">mdi-layers</v-icon>
+                    {{ layer.ui?.displayName || layer.name || layer.id }}
+                  </v-chip>
+                  <v-chip
+                    v-if="selectedLayersForExport.length === 0"
+                    small
+                    outlined
+                    class="ma-1"
+                  >
+                    No layers selected
+                  </v-chip>
+                </v-chip-group>
+
+                <!-- Export format selection -->
+                <v-select
+                  v-model="selectedExportFormat"
+                  :items="exportFormats"
+                  item-title="name"
+                  item-value="value"
+                  label="Export Format"
+                  prepend-icon="mdi-file-export"
+                  dense
+                  outlined
+                  class="mb-3"
+                  :disabled="!floorplan3d"
+                />
+                
+                <!-- <v-btn
+                  color="info"
+                  @click="getSelectedLayersExample"
+                  :disabled="!floorplan3d"
+                  elevation="2"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-eye</v-icon>
+                  Show Selected Layers
+                </v-btn> -->
+
+                <v-btn
+                  color="purple"
+                  @click="exportSelectedLayersExample"
+                  :disabled="!floorplan3d || selectedLayersForExport.length === 0"
+                  elevation="2"
+                  block
+                  class="mb-2"
+                  :loading="exportLoading"
+                >
+                  <v-icon small class="mr-1">mdi-download</v-icon>
+                  Export Selected Layers
+                </v-btn>
+                
+              </v-card-text>
+            </v-expand-transition>
+          </v-card>
+
         </div>
         
       </v-card>
@@ -262,6 +350,7 @@
 </template>
 
 <script>
+import * as THREE from 'three';
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import Floorplan3D from "@2112-lab/floorplan3d";
@@ -281,6 +370,7 @@ export default {
         layerManagement: false,
         autoImport: false,
         layerConfig: false,
+        exportLayers: false,
         quickOps: false,
         dataAccess: false,
       },
@@ -304,6 +394,15 @@ export default {
         { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' },
         { name: 'Extrusion Opacity', path: 'layerConfigs.extrusion.opacity.value' },
       ],
+
+      // Export functionality data
+      selectedExportFormat: 'gltf',
+      exportFormats: [
+        { name: 'GLTF Binary (.glb)', value: 'gltf' },
+        { name: 'JSON Export (.json)', value: 'json' },
+        { name: 'Three.js Scene (.json)', value: 'threejs' }
+      ],
+      exportLoading: false,
     };
   },
   computed: {
@@ -316,6 +415,23 @@ export default {
         id: id,
         name: layer.ui?.displayName || layer.name || id
       }));
+    },
+
+    selectedLayersForExport() {
+      if (!this.layers || Object.keys(this.layers).length === 0) {
+        return [];
+      }
+      
+      // Filter layers that are selected using the reactive layers data
+      const selectedLayers = Object.entries(this.layers)
+        .filter(([id, layer]) => layer && layer.selected === true)
+        .map(([id, layer]) => ({
+          ...layer,
+          id: id
+        }));
+      
+      console.log('Computed selectedLayersForExport:', selectedLayers.map(l => ({ id: l.id, name: l.name, selected: l.selected })));
+      return selectedLayers;
     },
   },
   mounted() {
@@ -436,7 +552,15 @@ export default {
     // Sync layers from floorplan3d internal store
     syncLayersFromFloorplan3D() {
       if (this.floorplan3d?.layerStore) {
+        const previousSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
         this.layers = { ...this.floorplan3d.layerStore.layers };
+        const currentSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
+        
+        console.log('Layer sync - Selected layers:', {
+          previous: previousSelectedCount,
+          current: currentSelectedCount,
+          selectedLayers: Object.values(this.layers).filter(l => l.selected).map(l => l.name || l.id)
+        });
       }
     },
 
@@ -450,6 +574,8 @@ export default {
     toggleLayerSelected(layerId) {
       if (this.floorplan3d) {
         this.floorplan3d.toggleLayerSelected(layerId);
+        // Sync the layers data to update the reactive state
+        this.syncLayersFromFloorplan3D();
       }
     },
 
@@ -642,6 +768,8 @@ export default {
       
       try {
         this.floorplan3d.toggleLayerSelected(this.selectedLayerId);
+        // Sync the layers data to update the reactive state
+        this.syncLayersFromFloorplan3D();
         this.showSnackbar(`Layer '${this.selectedLayerId}' selection toggled`, 'success');
       } catch (error) {
         this.showSnackbar(`Error toggling layer selection: ${error.message}`, 'error');
@@ -743,6 +871,187 @@ export default {
         this.showSnackbar(`Error getting selected documents: ${error.message}`, 'error');
       }
     },
+
+    // Export functionality methods
+    getSelectedLayersExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const selectedLayers = this.floorplan3d.layerStore.getSelectedLayers();
+        const threejsObjects = this.floorplan3d.getThreeJSObjectsFromSelectedLayers();
+        
+        console.log('Selected Layers:', selectedLayers);
+        console.log('Three.js Objects from Selected Layers:', threejsObjects);
+        
+        if (selectedLayers.length === 0) {
+          this.showSnackbar('No layers are currently selected', 'warning');
+        } else {
+          const layerNames = selectedLayers.map(layer => layer.ui?.displayName || layer.name || layer.id);
+          this.showSnackbar(`Selected layers: ${layerNames.join(', ')} (${threejsObjects.length} Three.js objects found - check console)`, 'info');
+        }
+      } catch (error) {
+        this.showSnackbar(`Error getting selected layers: ${error.message}`, 'error');
+      }
+    },
+
+    async exportSelectedLayersExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+
+      const selectedLayers = this.floorplan3d.layerStore.getSelectedLayers();
+      if (selectedLayers.length === 0) {
+        this.showSnackbar('No layers selected for export', 'warning');
+        return;
+      }
+
+      this.exportLoading = true;
+      
+      try {
+        let exportResult;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        switch (this.selectedExportFormat) {
+          case 'gltf':
+            exportResult = await this.exportSelectedLayersAsGLTF(selectedLayers, timestamp);
+            break;
+          case 'json':
+            exportResult = await this.exportSelectedLayersAsJSON(selectedLayers, timestamp);
+            break;
+          case 'threejs':
+            exportResult = await this.exportSelectedLayersAsThreeJS(selectedLayers, timestamp);
+            break;
+          default:
+            throw new Error('Unknown export format');
+        }
+
+        if (exportResult) {
+          this.showSnackbar(`Export completed: ${exportResult.filename}`, 'success');
+        }
+      } catch (error) {
+        console.error('Export error:', error);
+        this.showSnackbar(`Export failed: ${error.message}`, 'error');
+      } finally {
+        this.exportLoading = false;
+      }
+    },
+
+    async exportSelectedLayersAsGLTF(selectedLayers, timestamp) {
+      try {
+        // Use the Floorplan3D method to export selected layers
+        const gltfData = await this.floorplan3d.exportSelectedLayersAsGLTF();
+        
+        const layerNames = selectedLayers.map(l => l.ui?.displayName || l.name || l.id).join('_');
+        const filename = `selected_layers_${layerNames}_${timestamp}.glb`;
+        
+        // Convert to blob and download
+        const blob = new Blob([gltfData], { type: 'application/octet-stream' });
+        this.downloadBlob(blob, filename);
+        
+        return { filename, blob };
+      } catch (error) {
+        throw new Error(`GLTF export failed: ${error.message}`);
+      }
+    },
+
+    async exportSelectedLayersAsJSON(selectedLayers, timestamp) {
+      // Export layer data as JSON
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        selectedLayers: selectedLayers.map(layer => ({
+          id: layer.id,
+          name: layer.name,
+          displayName: layer.ui?.displayName,
+          active: layer.active,
+          selected: layer.selected,
+          visible: layer.visible,
+          layerConfigs: layer.layerConfigs,
+          metadata: layer.metadata,
+          objectCount: layer.threejsObjects ? layer.threejsObjects.length : 0
+        }))
+      };
+
+      const layerNames = selectedLayers.map(l => l.ui?.displayName || l.name || l.id).join('_');
+      const filename = `selected_layers_data_${layerNames}_${timestamp}.json`;
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      
+      this.downloadBlob(blob, filename);
+      return { filename, blob };
+    },
+
+    async exportSelectedLayersAsThreeJS(selectedLayers, timestamp) {
+      try {
+        // Get Three.js objects from selected layers using the Floorplan3D method
+        const objects = this.floorplan3d.getThreeJSObjectsFromSelectedLayers();
+        
+        if (objects.length === 0) {
+          throw new Error('No Three.js objects found in selected layers');
+        }
+
+        // Create a Three.js scene export
+        const sceneData = {
+          metadata: {
+            version: 4.5,
+            type: 'Object',
+            generator: 'Floorplan3D Layer Export'
+          },
+          geometries: [],
+          materials: [],
+          object: {
+            uuid: THREE.MathUtils.generateUUID(),
+            type: 'Scene',
+            children: []
+          }
+        };
+
+        // Process objects
+        objects.forEach(obj => {
+          if (obj && obj.toJSON) {
+            try {
+              const objectData = obj.toJSON();
+              sceneData.object.children.push(objectData.object);
+              
+              // Collect geometries and materials
+              if (objectData.geometries) {
+                sceneData.geometries.push(...objectData.geometries);
+              }
+              if (objectData.materials) {
+                sceneData.materials.push(...objectData.materials);
+              }
+            } catch (e) {
+              console.warn('Failed to serialize object:', e);
+            }
+          }
+        });
+
+        const layerNames = selectedLayers.map(l => l.ui?.displayName || l.name || l.id).join('_');
+        const filename = `selected_layers_threejs_${layerNames}_${timestamp}.json`;
+        const jsonString = JSON.stringify(sceneData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        
+        this.downloadBlob(blob, filename);
+        return { filename, blob };
+      } catch (error) {
+        throw new Error(`Three.js export failed: ${error.message}`);
+      }
+    },
+
+    downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+
   },
 };
 </script>
