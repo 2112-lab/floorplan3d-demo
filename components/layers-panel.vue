@@ -459,7 +459,6 @@ export default {
         const start = layer.layerConfigs.extrusion.start.value;
         const end = layer.layerConfigs.extrusion.end.value;
         const height = Math.abs(end - start);
-        const verticalPosition = Math.min(start, end);
         
         // Update both height and vertical position
         this.floorplan3d.updateLayerConfig(
@@ -476,11 +475,6 @@ export default {
           layerId, 
           'layerConfigs.extrusion.height.value', 
           height
-        );
-        this.floorplan3d.updateLayerConfig(
-          layerId, 
-          'layerConfigs.extrusion.verticalPosition.value', 
-          verticalPosition
         );
       }
     },

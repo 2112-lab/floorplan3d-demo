@@ -346,8 +346,6 @@ export default {
         return 'Opacity value (0.0 to 1.0)';
       } else if (this.selectedConfigPath.includes('start') || this.selectedConfigPath.includes('end') || this.selectedConfigPath.includes('height')) {
         return 'Height/position value (number, can be negative)';
-      } else if (this.selectedConfigPath.includes('verticalPosition')) {
-        return 'Vertical offset value (number, can be negative)';
       }
       
       return 'Numeric value';
