@@ -514,9 +514,9 @@ export default {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
           this.floorplan3d.autoImportSvg('FP3D-00-07.svg'); // This has base64 image
           // Set rooms layer opacity after auto-import
-          setTimeout(() => {
-            this.setRoomsLayerOpacity(0.75);
-          }, 150);
+          // setTimeout(() => {
+          //   this.setRoomsLayerOpacity(0.75);
+          // }, 150);
         }, 500);
 
         console.log('Floorplan3D initialized successfully');
