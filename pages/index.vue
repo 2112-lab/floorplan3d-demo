@@ -115,7 +115,7 @@
                   Manage layers in the scene
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
-                  <code class="code-dark">setLayerActive(layerId), toggleLayerSelected(layerId)</code>
+                  <code class="code-dark">toggleLayerSelected(layerId)</code>
                 </div>
                 
                 <v-select
@@ -131,7 +131,7 @@
                   :disabled="!floorplan3d || availableLayerIds.length === 0"
                 />
                 
-                <v-btn
+                <!-- <v-btn
                   color="success"
                   @click="setLayerActiveExample"
                   :disabled="!floorplan3d || !selectedLayerId"
@@ -141,7 +141,7 @@
                 >
                   <v-icon small class="mr-1">mdi-eye</v-icon>
                   Set Layer Active
-                </v-btn>
+                </v-btn> -->
 
                 <v-btn
                   color="info"
