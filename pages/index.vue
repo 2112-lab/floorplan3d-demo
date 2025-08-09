@@ -112,7 +112,7 @@
             <v-expand-transition>
               <v-card-text v-show="expandedSections.layerManagement" class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
-                  Manage layers and documents in the scene
+                  Manage layers in the scene
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
                   <code class="code-dark">setLayerActive(layerId), toggleLayerSelected(layerId)</code>
@@ -213,7 +213,7 @@
                   outlined
                   class="mb-2"
                   :disabled="!floorplan3d"
-                  hint="Height value for extrusion (number)"
+                  :hint="getConfigValueHint()"
                   persistent-hint
                 />
                 
@@ -223,9 +223,22 @@
                   :disabled="!floorplan3d || !selectedConfigLayerId || !selectedConfigPath || !configValue"
                   elevation="2"
                   block
+                  class="mb-2"
                 >
                   <v-icon small class="mr-1">mdi-cog</v-icon>
                   Update Config
+                </v-btn>
+                
+                <v-btn
+                  color="info"
+                  @click="inspectLayerConfigExample"
+                  :disabled="!floorplan3d || !selectedConfigLayerId"
+                  elevation="2"
+                  block
+                  outlined
+                >
+                  <v-icon small class="mr-1">mdi-information</v-icon>
+                  Inspect Layer Config
                 </v-btn>
               </v-card-text>
             </v-expand-transition>
@@ -293,24 +306,12 @@ export default {
       // API Examples data
       selectedLayerId: null,
       selectedSvgFile: 'FP3D-00-08.svg',
-      availableSvgFiles: [
-        'FP3D-00-05-caleb.svg',
-        'FP3D-00-05.svg',
-        'FP3D-00-06.svg',
-        'FP3D-00-07.svg',
-        'FP3D-00-08.svg',
-        'FP3D-06-01-caleb.svg',
-        'FP3D-06-01.svg',
-        'FP3D-06-02.svg'
-      ],
       selectedConfigLayerId: null,
       selectedConfigPath: null,
       configValue: '',
       configPaths: [
-        { name: 'Extrusion Height', path: 'extrusion.height.value' },
-        { name: 'Extrusion Start', path: 'extrusion.start.value' },
-        { name: 'Extrusion End', path: 'extrusion.end.value' },
-        { name: 'Vertical Position', path: 'extrusion.verticalPosition.value' },
+        { name: 'Extrusion Start', path: 'layerConfigs.extrusion.start.value' },
+        { name: 'Extrusion End', path: 'layerConfigs.extrusion.end.value' }
       ],
     };
   },
@@ -337,6 +338,21 @@ export default {
     this.cleanupFloorplan3D();
   },
   methods: {
+    // Helper method for dynamic hint text
+    getConfigValueHint() {
+      if (!this.selectedConfigPath) return 'Select a configuration path first';
+      
+      if (this.selectedConfigPath.includes('opacity')) {
+        return 'Opacity value (0.0 to 1.0)';
+      } else if (this.selectedConfigPath.includes('start') || this.selectedConfigPath.includes('end') || this.selectedConfigPath.includes('height')) {
+        return 'Height/position value (number, can be negative)';
+      } else if (this.selectedConfigPath.includes('verticalPosition')) {
+        return 'Vertical offset value (number, can be negative)';
+      }
+      
+      return 'Numeric value';
+    },
+
     // Handle container ready event from threejs-renderer
     onContainerReady({ container, renderer }) {
       console.log('Container ready, initializing Floorplan3D...');
@@ -565,10 +581,47 @@ export default {
           return;
         }
         
-        this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, numericValue);
-        this.showSnackbar(`Layer config updated: ${this.selectedConfigPath} = ${numericValue}`, 'success');
+        console.log('Updating layer config:', {
+          layerId: this.selectedConfigLayerId,
+          configPath: this.selectedConfigPath,
+          value: numericValue
+        });
+        
+        const result = this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, numericValue);
+        
+        if (result) {
+          this.showSnackbar(`Layer config updated successfully: ${this.selectedConfigPath} = ${numericValue}`, 'success');
+          console.log('Layer after update:', result);
+        } else {
+          this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
+        }
       } catch (error) {
+        console.error('Error updating layer config:', error);
         this.showSnackbar(`Error updating layer config: ${error.message}`, 'error');
+      }
+    },
+
+    inspectLayerConfigExample() {
+      if (!this.floorplan3d || !this.selectedConfigLayerId) {
+        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const layer = this.floorplan3d.layerStore.layers[this.selectedConfigLayerId];
+        if (layer) {
+          console.log('Layer configuration:', layer);
+          console.log('Layer configs:', layer.layerConfigs);
+          if (layer.layerConfigs?.extrusion) {
+            console.log('Extrusion config:', layer.layerConfigs.extrusion);
+          }
+          this.showSnackbar(`Layer config logged to console`, 'info');
+        } else {
+          this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
+        }
+      } catch (error) {
+        console.error('Error inspecting layer config:', error);
+        this.showSnackbar(`Error inspecting layer: ${error.message}`, 'error');
       }
     },
 
