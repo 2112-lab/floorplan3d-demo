@@ -31,7 +31,7 @@
         </div>
       </div>   
     </div>    
-
+    
     <!-- API Examples Panel - Right Sidebar -->
     <div style="position: fixed; top: 20px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
       <v-card 
@@ -292,6 +292,7 @@ export default {
         layerManagement: false,
         autoImport: false,
         layerConfig: false,
+        quickOps: false,
         dataAccess: false,
       },
       snackbar: {
@@ -305,13 +306,14 @@ export default {
       
       // API Examples data
       selectedLayerId: null,
-      selectedSvgFile: 'FP3D-00-08.svg',
+      selectedSvgFile: 'FP3D-00-07.svg',
       selectedConfigLayerId: null,
       selectedConfigPath: null,
       configValue: '',
       configPaths: [
         { name: 'Extrusion Start', path: 'layerConfigs.extrusion.start.value' },
-        { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' }
+        { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' },
+        { name: 'Extrusion Opacity', path: 'layerConfigs.extrusion.opacity.value' },
       ],
     };
   },
@@ -405,6 +407,10 @@ export default {
         // Auto-import the default SVG file after initialization
         setTimeout(() => {
           this.floorplan3d.autoImportSvg();
+          // Set rooms layer opacity after auto-import
+          setTimeout(() => {
+            this.setRoomsLayerOpacity(0.75);
+          }, 100);
         }, 500);
 
         console.log('Floorplan3D initialized successfully');
@@ -490,6 +496,54 @@ export default {
       this.floorplan3d.resetScene();
     },
 
+    // Helper method to find layer by name pattern (case-insensitive)
+    findLayerByName(namePattern) {
+      if (!this.floorplan3d) {
+        console.warn('Floorplan3D not initialized');
+        return null;
+      }
+      
+      const allLayers = this.floorplan3d.layerStore.getAllLayers();
+      return allLayers.find(layer => {
+        const displayName = layer.ui?.displayName?.toLowerCase() || '';
+        const layerName = layer.name?.toLowerCase() || '';
+        const layerGroup = layer.metadata?.layerGroup?.toLowerCase() || '';
+        const pattern = namePattern.toLowerCase();
+        
+        return displayName.includes(pattern) || 
+               layerName.includes(pattern) || 
+               layerGroup.includes(pattern);
+      });
+    },
+
+    // Helper method to find and update rooms layer opacity
+    setRoomsLayerOpacity(opacity) {
+      const roomsLayer = this.findLayerByName('rooms');
+      
+      if (roomsLayer) {
+        console.log('Found rooms layer:', roomsLayer.id, 'Setting opacity to', opacity);
+        this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", opacity);
+        this.showSnackbar(`Rooms layer opacity set to ${opacity}`, 'success');
+      } else {
+        console.warn('Rooms layer not found');
+        this.showSnackbar('Rooms layer not found', 'warning');
+      }
+    },
+
+    // Generic helper method to set any layer's opacity by name pattern
+    setLayerOpacityByName(namePattern, opacity) {
+      const layer = this.findLayerByName(namePattern);
+      
+      if (layer) {
+        console.log(`Found ${namePattern} layer:`, layer.id, 'Setting opacity to', opacity);
+        this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.extrusion.opacity.value", opacity);
+        this.showSnackbar(`${layer.ui?.displayName || namePattern} layer opacity set to ${opacity}`, 'success');
+      } else {
+        console.warn(`${namePattern} layer not found`);
+        this.showSnackbar(`${namePattern} layer not found`, 'warning');
+      }
+    },
+
     showSnackbar(text, color = 'success') {
       this.snackbar.text = text;
       this.snackbar.color = color;
@@ -565,7 +619,7 @@ export default {
         this.showSnackbar(`Error importing SVG: ${error.message}`, 'error');
       }
     },
-
+    
     updateLayerConfigExample() {
       if (!this.floorplan3d || !this.selectedConfigLayerId || !this.selectedConfigPath || !this.configValue) {
         this.showSnackbar('Missing required fields for layer config update', 'error');
