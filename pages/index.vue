@@ -66,7 +66,7 @@
             <v-expand-transition>
               <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
-                  Control and manipulate the 3D scene
+                  Control and manipulate the 3D scene, including ground plane textures
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
                   <code class="code-dark">importFile(), resetScene()</code>
@@ -278,32 +278,6 @@
                   </v-chip>
                 </v-chip-group>
 
-                <!-- Export format selection -->
-                <v-select
-                  v-model="selectedExportFormat"
-                  :items="exportFormats"
-                  item-title="name"
-                  item-value="value"
-                  label="Export Format"
-                  prepend-icon="mdi-file-export"
-                  dense
-                  outlined
-                  class="mb-3"
-                  :disabled="!floorplan3d"
-                />
-                
-                <!-- <v-btn
-                  color="info"
-                  @click="getSelectedLayersExample"
-                  :disabled="!floorplan3d"
-                  elevation="2"
-                  block
-                  class="mb-2"
-                >
-                  <v-icon small class="mr-1">mdi-eye</v-icon>
-                  Show Selected Layers
-                </v-btn> -->
-
                 <v-btn
                   color="purple"
                   @click="exportSelectedLayersExample"
@@ -397,11 +371,6 @@ export default {
 
       // Export functionality data
       selectedExportFormat: 'gltf',
-      exportFormats: [
-        { name: 'GLTF Binary (.glb)', value: 'gltf' },
-        { name: 'JSON Export (.json)', value: 'json' },
-        { name: 'Three.js Scene (.json)', value: 'threejs' }
-      ],
       exportLoading: false,
     };
   },
@@ -512,11 +481,11 @@ export default {
         // Auto-import the default SVG file after initialization (changed to test base64 image)
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
-          this.floorplan3d.autoImportSvg('FP3D-00-07.svg'); // This has base64 image
+          this.floorplan3d.autoImportSvg('FP3D-00-07.svg'); // This has base64 image and will auto-create ground planes
           // Set rooms layer opacity after auto-import
-          // setTimeout(() => {
-          //   this.setRoomsLayerOpacity(0.75);
-          // }, 150);
+          setTimeout(() => {
+            this.setRoomsLayerOpacity(0.30);
+          }, 150);
         }, 500);
 
         console.log('Floorplan3D initialized successfully');
@@ -610,58 +579,6 @@ export default {
       }
       
       this.floorplan3d.resetScene();
-    },
-
-    // Load the specific SVG file with base64 image
-    async loadBase64ImageSvg() {
-      if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not initialized', 'error');
-        return;
-      }
-      
-      try {
-        this.showSnackbar('Starting base64 image load...', 'info');
-        
-        // Load the FP3D-00-07.svg file specifically
-        const response = await fetch('/inkscape-samples/FP3D-00-07.svg');
-        if (!response.ok) {
-          throw new Error(`Failed to load SVG: ${response.statusText}`);
-        }
-        
-        const svgContent = await response.text();
-        console.log('Loaded FP3D-00-07.svg content:', svgContent.substring(0, 200) + '...');
-        this.showSnackbar(`SVG loaded, length: ${svgContent.length}`, 'info');
-        
-        // Force clear existing layers
-        this.floorplan3d.resetScene(); 
-        
-        // Check if there are image elements in the SVG
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svgContent, "image/svg+xml");
-        const images = svgDoc.querySelectorAll("image");
-        this.showSnackbar(`Found ${images.length} image elements in SVG`, 'info');
-        
-        if (images.length > 0) {
-          const firstImage = images[0];
-          let href = firstImage.getAttribute('xlink:href') || firstImage.getAttribute('href');
-          
-          if (href) {
-            const hasEntities = href.includes('&#10;') || href.includes('&#13;');
-            const cleanHref = href.replace(/&#10;/g, '').replace(/&#13;/g, '');
-            this.showSnackbar(`Image href found (entities: ${hasEntities}, length: ${cleanHref.length})`, 'info');
-          } else {
-            this.showSnackbar('Image element has no href attribute', 'warning');
-          }
-        }
-        
-        // Use the floorplan3d method to parse and import the SVG
-        await this.floorplan3d.importAndStoreDocuments(svgContent);
-        
-        this.showSnackbar('FP3D-00-07.svg with base64 image loaded successfully!', 'success');
-      } catch (error) {
-        console.error('Error loading base64 image SVG:', error);
-        this.showSnackbar(`Error loading SVG: ${error.message}`, 'error');
-      }
     },
 
     // Helper method to find layer by name pattern (case-insensitive)
@@ -918,12 +835,6 @@ export default {
         switch (this.selectedExportFormat) {
           case 'gltf':
             exportResult = await this.exportSelectedLayersAsGLTF(selectedLayers, timestamp);
-            break;
-          case 'json':
-            exportResult = await this.exportSelectedLayersAsJSON(selectedLayers, timestamp);
-            break;
-          case 'threejs':
-            exportResult = await this.exportSelectedLayersAsThreeJS(selectedLayers, timestamp);
             break;
           default:
             throw new Error('Unknown export format');

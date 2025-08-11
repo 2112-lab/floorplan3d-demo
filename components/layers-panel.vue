@@ -36,17 +36,8 @@
                 class="mr-0 mt-0 mb-0 ml-0 compact-checkbox"
                 @click.stop="toggleLayerSelected(layer.id)"
               ></v-checkbox>
-
-              <!-- 3D Toggle Icon -->
-              <v-icon 
-                color="black" 
-                class="mr-1"
-                @click.stop="toggle3DVisibility(layer.id)"
-                :disabled="layer.disabled || layer.metadata.category !== 'vector'"
-                style="cursor: pointer;"
-              >
-                {{ layer.show3D ? 'mdi-video-3d' : 'mdi-video-3d-off' }}
-              </v-icon>              <span 
+            
+              <span 
                 :class="{ 'text--disabled': layer.disabled }"
                 class="small-text"
                 @dblclick.stop="openRenameDialog(layer)"
@@ -378,27 +369,6 @@ export default {
       this.renameDialogVisible = false;
       this.newLayerName = '';
       this.layerToRename = null;
-    },
-    
-    toggle3DVisibility(layerId) {
-      console.log("toggle3DVisibility started for layer:", layerId);
-      const layer = this.layers[layerId];
-      if (layer?.disabled) return;
-      
-      // Toggle the show3D property using floorplan3d instance
-      if (this.floorplan3d) {
-        const newValue = !layer.show3D;
-        this.floorplan3d.updateLayerConfig(layerId, 'show3D', newValue);
-
-        console.log("toggle3DVisibility layer:", JSON.parse(JSON.stringify(layer)));
-
-        if (layer.threejsContent && layer.threejsContent.objects) {
-          for(let obj of layer.threejsContent.objects) {
-            console.log("toggle3DVisibility obj:", JSON.parse(JSON.stringify(obj)));
-            obj.visible = newValue;
-          }   
-        }
-      }
     },
 
     // Methods for managing expanded controls state
