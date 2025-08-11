@@ -410,17 +410,13 @@ export default {
   },
   data() {
     return {
-      floorplan3d: null, // Floorplan3D instance managed here now
-      threejsRenderer: null,
+      floorplan3d: null,
       expandedSections: {
         sceneControls: true,
         layerManagement: false,
-        autoImport: false,
         layerConfig: false,
         exportLayers: false,
         imageOpacity: false,
-        quickOps: false,
-        dataAccess: false,
       },
       snackbar: {
         show: false,
@@ -433,7 +429,6 @@ export default {
       
       // API Examples data
       selectedLayerId: null,
-      selectedSvgFile: 'FP3D-00-07.svg',
       selectedConfigLayerId: null,
       selectedConfigPath: null,
       configValue: '',
@@ -445,7 +440,6 @@ export default {
       ],
 
       // Export functionality data
-      selectedExportFormat: 'gltf',
       exportLoading: false,
 
       // Image opacity data
@@ -455,21 +449,14 @@ export default {
   },
   computed: {
     availableLayerIds() {
-      console.log('Computing availableLayerIds - layers object:', this.layers);
-      console.log('Computing availableLayerIds - keys count:', Object.keys(this.layers || {}).length);
-      
       if (!this.layers || Object.keys(this.layers).length === 0) {
-        console.log('No layers available, returning empty array');
         return [];
       }
       
-      const result = Object.entries(this.layers).map(([id, layer]) => ({
+      return Object.entries(this.layers).map(([id, layer]) => ({
         id: id,
         name: layer.ui?.displayName || layer.name || id
       }));
-      
-      console.log('availableLayerIds result:', result);
-      return result;
     },
 
     availableImageLayerIds() {
@@ -490,22 +477,15 @@ export default {
         return [];
       }
       
-      // Filter layers that are selected using the reactive layers data
-      const selectedLayers = Object.entries(this.layers)
+      return Object.entries(this.layers)
         .filter(([id, layer]) => layer && layer.selected === true)
         .map(([id, layer]) => ({
           ...layer,
           id: id
         }));
-      
-      console.log('Computed selectedLayersForExport:', selectedLayers.map(l => ({ id: l.id, name: l.name, selected: l.selected })));
-      return selectedLayers;
     },
   },
   mounted() {
-    // Store references to renderers
-    this.threejsRenderer = this.$refs.threejsRenderer;
-    
     // Floorplan3D will be initialized when container is ready via onContainerReady event
   },
   beforeDestroy() {
@@ -513,7 +493,7 @@ export default {
     this.cleanupFloorplan3D();
   },
   methods: {
-    // Helper method for dynamic hint text
+    // Component Lifecycle & Setup
     getConfigValueHint() {
       if (!this.selectedConfigPath) return 'Select a configuration path first';
       
@@ -528,22 +508,19 @@ export default {
       return 'Numeric value';
     },
 
-    // Handle container ready event from threejs-renderer
     onContainerReady({ container, renderer }) {
       console.log('Container ready, initializing Floorplan3D...');
-      // Add a small delay to ensure DOM is fully ready
       this.$nextTick(() => {
         this.initFloorplan3D(container, renderer);
       });
     },
 
-    // Handle container destroyed event from threejs-renderer  
     onContainerDestroyed() {
       console.log('Container destroyed, cleaning up Floorplan3D...');
       this.cleanupFloorplan3D();
     },
 
-    // Initialize Floorplan3D instance
+    // Floorplan3D Initialization & Cleanup
     initFloorplan3D(containerRef, rendererRef) {
 
       if (!containerRef || !rendererRef) {
@@ -563,23 +540,22 @@ export default {
         // Initialize using Floorplan3D class and mark as raw to prevent Vue reactivity
         this.floorplan3d = markRaw(new Floorplan3D(rendererRef, width, height));
 
-        // Set up event listeners for notifications
-        this.floorplan3d.addEventListener('notification', this.handleFloorplan3DNotification);
 
-        // Auto-import the default SVG file after initialization using importFileByName
+        // Auto-import the default SVG file after initialization
         setTimeout(() => {
-          console.log('=== CALLING AUTO IMPORT FROM VUE ===');
+          console.log('Auto-importing default SVG file...');
           this.floorplan3d.importFileWithPath('/inkscape-samples/FP3D-00-07.svg').then(() => {
-            // Sync layers after auto-import completes
+            // Sync layers and set initial opacity after auto-import completes
             setTimeout(() => {
-              this.syncLayersFromFloorplan3D();
-              console.log('Layers synced after auto-import');
+              const roomsLayer = this.findLayerByName('rooms');
+      
+              if (roomsLayer) {
+                this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
+              }
+              
+              console.log('Auto-import complete');
             }, 100);
           });
-          // Set rooms layer opacity after auto-import
-          setTimeout(() => {
-            this.setRoomsLayerOpacity(0.30);
-          }, 150);
         }, 500);
 
         console.log('Floorplan3D initialized successfully');
@@ -589,24 +565,14 @@ export default {
       }
     },
 
-    // Handle notifications from Floorplan3D
-    handleFloorplan3DNotification(notification) {
-      this.showSnackbar(notification.text, notification.type);
-      
-      // Sync layers when SVG import is successful
-      if (notification.type === 'success' && 
-          (notification.text.includes('imported successfully') || 
-           notification.text.includes('Import successful'))) {
-        console.log('SVG import successful, syncing layers...');
-        this.syncLayersFromFloorplan3D();
-      }
+    onLayerSelectionChanged(event) {
+      console.log('Layer selection changed:', event);
+      this.syncLayersFromFloorplan3D();
     },
 
-    // Cleanup Floorplan3D instance
+    // Cleanup
     cleanupFloorplan3D() {
       if (this.floorplan3d) {
-        // Remove event listeners
-        this.floorplan3d.removeEventListener('notification', this.handleFloorplan3DNotification);
 
         // Dispose of renderer
         if (this.floorplan3d.renderer) {
@@ -623,22 +589,8 @@ export default {
     // Sync layers from floorplan3d internal store
     syncLayersFromFloorplan3D() {
       if (this.floorplan3d?.layerStore) {
-        const previousSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
-        const previousLayerCount = Object.keys(this.layers).length;
-        
         this.layers = { ...this.floorplan3d.layerStore.layers };
-        
-        const currentSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
-        const currentLayerCount = Object.keys(this.layers).length;
-        
-        console.log('Layer sync - Complete:', {
-          previousLayerCount,
-          currentLayerCount,
-          previousSelectedCount,
-          currentSelectedCount,
-          layerIds: Object.keys(this.layers),
-          selectedLayers: Object.values(this.layers).filter(l => l.selected).map(l => l.name || l.id)
-        });
+        console.log('Layers synced:', Object.keys(this.layers).length, 'layers');
       } else {
         console.warn('Cannot sync layers: floorplan3d or layerStore not available');
       }
@@ -659,7 +611,7 @@ export default {
       }
     },
 
-    // Simplified scene control methods - delegate to floorplan3d
+    // Scene Control Methods
     async importFile() {
       if (!this.floorplan3d) {
         this.showSnackbar('Floorplan3D not initialized', 'error');
@@ -683,7 +635,7 @@ export default {
       this.floorplan3d.resetScene();
     },
 
-    // Helper method to find layer by name pattern (case-insensitive)
+    // Helper Methods
     findLayerByName(namePattern) {
       if (!this.floorplan3d) {
         console.warn('Floorplan3D not initialized');
@@ -703,67 +655,13 @@ export default {
       });
     },
 
-    // Helper method to find and update rooms layer opacity
-    setRoomsLayerOpacity(opacity) {
-      const roomsLayer = this.findLayerByName('rooms');
-      
-      if (roomsLayer) {
-        console.log('Found rooms layer:', roomsLayer.id, 'Setting opacity to', opacity);
-        this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", opacity);
-        this.showSnackbar(`Rooms layer opacity set to ${opacity}`, 'success');
-      } else {
-        console.warn('Rooms layer not found');
-        this.showSnackbar('Rooms layer not found', 'warning');
-      }
-    },
-
-    // Generic helper method to set any layer's opacity by name pattern
-    setLayerOpacityByName(namePattern, opacity) {
-      const layer = this.findLayerByName(namePattern);
-      
-      if (layer) {
-        console.log(`Found ${namePattern} layer:`, layer.id, 'Setting opacity to', opacity);
-        
-        // Handle both vector and raster layers
-        if (layer.metadata.category === 'vector') {
-          this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.extrusion.opacity.value", opacity);
-        } else if (layer.metadata.category === 'raster') {
-          // For raster layers, update both the layer config and image texture
-          this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.layer.opacity.value", opacity);
-          this.floorplan3d.setImageOpacity(opacity, layer.id);
-        }
-        
-        this.showSnackbar(`${layer.ui?.displayName || namePattern} layer opacity set to ${opacity}`, 'success');
-      } else {
-        console.warn(`${namePattern} layer not found`);
-        this.showSnackbar(`${namePattern} layer not found`, 'warning');
-      }
-    },
-
     showSnackbar(text, color = 'success') {
       this.snackbar.text = text;
       this.snackbar.color = color;
       this.snackbar.show = true;
     },
 
-    // Helper methods for layer management - delegate to floorplan3d
-    getLayer(layerId) {
-      return this.floorplan3d?.layerStore?.layers[layerId];
-    },
-
-    getActiveLayer() {
-      if (!this.floorplan3d) return null;
-      
-      const activeLayer = Object.values(this.layers).find(layer => layer.active);
-      if (!activeLayer) return null;
-      
-      const layerId = Object.keys(this.layers).find(key => this.layers[key].active);
-      return {
-        ...activeLayer,
-        id: layerId
-      };
-    },
-
+    // API Example Methods
     toggleLayerSelectedExample() {
       if (!this.floorplan3d || !this.selectedLayerId) {
         this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
@@ -807,17 +705,12 @@ export default {
           }
         }
         
-        console.log('Updating layer config:', {
-          layerId: this.selectedConfigLayerId,
-          configPath: this.selectedConfigPath,
-          value: processedValue
-        });
+        console.log('Updating layer config:', this.selectedConfigLayerId, this.selectedConfigPath, processedValue);
         
         const result = this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, processedValue);
         
         if (result) {
-          this.showSnackbar(`Layer config updated successfully: ${this.selectedConfigPath} = ${processedValue}`, 'success');
-          console.log('Layer after update:', result);
+          this.showSnackbar(`Layer config updated: ${this.selectedConfigPath} = ${processedValue}`, 'success');
         } else {
           this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
         }
@@ -910,10 +803,10 @@ export default {
         console.error('Error setting image opacity:', error);
         this.showSnackbar(`Error setting image opacity: ${error.message}`, 'error');
       }
-    },
+    }
+  }
+}
 
-  },
-};
 </script>
 
 <style scoped>

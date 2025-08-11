@@ -502,16 +502,6 @@ export default {
       }
     },
 
-    // Keep the old method for backward compatibility
-    updateExtrusionHeightLegacy(layerId) {
-      this.updateExtrusionDimensions(layerId);
-      // Emit event to parent component to sync layers
-      this.$emit('layer-selection-changed', { 
-        layerId, 
-        action: 'update-extrusion-dimensions-legacy'
-      });
-    },
-
     updateExtrusionOpacity(layerId) {
       const layer = this.layers[layerId];
       if (layer && this.floorplan3d) {
