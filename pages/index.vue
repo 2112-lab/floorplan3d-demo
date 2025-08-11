@@ -233,6 +233,73 @@
             </v-expand-transition>
           </v-card>
 
+          <!--Image Opacity Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer pa-2" 
+              @click="expandedSections.imageOpacity = !expandedSections.imageOpacity"
+            >
+              <v-icon small class="mr-2" color="teal">mdi-image-outline</v-icon>
+              <span class="font-weight-medium">Image Opacity</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.imageOpacity }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.imageOpacity" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Control opacity of image textures
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">setImageOpacity(opacity, layerId)</code>
+                </div>
+                
+                <v-select
+                  v-model="selectedImageLayerId"
+                  :items="availableImageLayerIds"
+                  item-title="name"
+                  item-value="id"
+                  label="Image Layer (optional)"
+                  prepend-icon="mdi-image"
+                  dense
+                  outlined
+                  class="mt-4 mb-n3"
+                  :disabled="!floorplan3d"
+                  clearable
+                  hint="Leave empty to affect all images"
+                  persistent-hint
+                />
+                
+                <v-slider
+                  v-model="imageOpacityValue"
+                  label="Opacity"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  thumb-label
+                  dense
+                  class="mt-7 mb-0"
+                  :disabled="!floorplan3d"
+                  prepend-icon="mdi-opacity"
+                />
+                
+                <v-btn
+                  color="teal"
+                  @click="setImageOpacityExample"
+                  :disabled="!floorplan3d"
+                  elevation="2"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-image-outline</v-icon>
+                  Set Image Opacity
+                </v-btn>
+                
+              </v-card-text>
+            </v-expand-transition>
+          </v-card>
+
           <!-- Export Selected Layers Section -->
           <v-card outlined class="mb-4">
             <v-card-subtitle 
@@ -289,73 +356,6 @@
                 >
                   <v-icon small class="mr-1">mdi-download</v-icon>
                   Export Selected Layers
-                </v-btn>
-                
-              </v-card-text>
-            </v-expand-transition>
-          </v-card>
-
-          <!--Image Opacity Section -->
-          <v-card outlined class="mb-4">
-            <v-card-subtitle 
-              class="d-flex align-center cursor-pointer pa-2" 
-              @click="expandedSections.imageOpacity = !expandedSections.imageOpacity"
-            >
-              <v-icon small class="mr-2" color="teal">mdi-image-outline</v-icon>
-              <span class="font-weight-medium">Image Opacity</span>
-              <v-spacer></v-spacer>
-              <v-icon :class="{ 'rotate-180': expandedSections.imageOpacity }">
-                mdi-chevron-down
-              </v-icon>
-            </v-card-subtitle>
-            <v-expand-transition>
-              <v-card-text v-show="expandedSections.imageOpacity" class="pt-2">
-                <div class="card-description text-caption text--secondary mb-2">
-                  Control opacity of image textures
-                </div>
-                <div class="card-description text-caption text--secondary mb-3">
-                  <code class="code-dark">setImageOpacity(opacity, layerId)</code>
-                </div>
-                
-                <v-select
-                  v-model="selectedImageLayerId"
-                  :items="availableImageLayerIds"
-                  item-title="name"
-                  item-value="id"
-                  label="Image Layer (optional)"
-                  prepend-icon="mdi-image"
-                  dense
-                  outlined
-                  class="mt-4 mb-n3"
-                  :disabled="!floorplan3d"
-                  clearable
-                  hint="Leave empty to affect all images"
-                  persistent-hint
-                />
-                
-                <v-slider
-                  v-model="imageOpacityValue"
-                  label="Opacity"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  thumb-label
-                  dense
-                  class="mt-4 mb-2"
-                  :disabled="!floorplan3d"
-                  prepend-icon="mdi-opacity"
-                />
-                
-                <v-btn
-                  color="teal"
-                  @click="setImageOpacityExample"
-                  :disabled="!floorplan3d"
-                  elevation="2"
-                  block
-                  class="mb-2"
-                >
-                  <v-icon small class="mr-1">mdi-image-outline</v-icon>
-                  Set Image Opacity
                 </v-btn>
                 
               </v-card-text>
@@ -435,6 +435,7 @@ export default {
         { name: 'Extrusion Start', path: 'layerConfigs.extrusion.start.value' },
         { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' },
         { name: 'Opacity', path: 'layerConfigs.extrusion.opacity.value' },
+        { name: 'Material Color', path: 'layerConfigs.material.color.value' },
       ],
 
       // Export functionality data
@@ -507,6 +508,8 @@ export default {
         return 'Opacity value (0.0 to 1.0)';
       } else if (this.selectedConfigPath.includes('start') || this.selectedConfigPath.includes('end') || this.selectedConfigPath.includes('height')) {
         return 'Height/position value (number, can be negative)';
+      } else if (this.selectedConfigPath.includes('color')) {
+        return 'Hex color value (e.g., #ff0000, #00ff00, #0000ff)';
       }
       
       return 'Numeric value';
@@ -808,22 +811,36 @@ export default {
       }
       
       try {
-        const numericValue = parseFloat(this.configValue);
-        if (isNaN(numericValue)) {
-          this.showSnackbar('Config value must be a valid number', 'error');
-          return;
+        let processedValue = this.configValue;
+        
+        // Handle different value types based on the config path
+        if (this.selectedConfigPath.includes('color')) {
+          // Validate hex color format
+          if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(this.configValue)) {
+            this.showSnackbar('Color value must be a valid hex color (e.g., #ff0000)', 'error');
+            return;
+          }
+          // Color values are kept as strings
+          processedValue = this.configValue;
+        } else {
+          // For numeric values, convert to number
+          processedValue = parseFloat(this.configValue);
+          if (isNaN(processedValue)) {
+            this.showSnackbar('Config value must be a valid number', 'error');
+            return;
+          }
         }
         
         console.log('Updating layer config:', {
           layerId: this.selectedConfigLayerId,
           configPath: this.selectedConfigPath,
-          value: numericValue
+          value: processedValue
         });
         
-        const result = this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, numericValue);
+        const result = this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, processedValue);
         
         if (result) {
-          this.showSnackbar(`Layer config updated successfully: ${this.selectedConfigPath} = ${numericValue}`, 'success');
+          this.showSnackbar(`Layer config updated successfully: ${this.selectedConfigPath} = ${processedValue}`, 'success');
           console.log('Layer after update:', result);
         } else {
           this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
