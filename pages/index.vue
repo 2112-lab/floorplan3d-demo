@@ -45,7 +45,22 @@
         <v-card-title class="py-3">
           <v-icon class="mr-2">mdi-api</v-icon>
           <span class="text-h6">API Examples</span>
-          <v-spacer></v-spacer>
+          <a 
+            href="https://floorplan3d-api-docs.s3.us-east-1.amazonaws.com/v1.0.16/global.html" 
+            target="_blank" 
+            class="text-decoration-none"
+          >
+            <v-btn 
+              size="small"
+              outlined 
+              color="primary"
+              style="margin-left:70px"
+            >
+              <v-icon small class="mr-1">mdi-book-open-variant</v-icon>
+              Docs
+              <v-icon small class="ml-1">mdi-open-in-new</v-icon>
+            </v-btn>
+          </a>
         </v-card-title>
         
         <v-divider></v-divider>
@@ -551,10 +566,10 @@ export default {
         // Set up event listeners for notifications
         this.floorplan3d.addEventListener('notification', this.handleFloorplan3DNotification);
 
-        // Auto-import the default SVG file after initialization using importSvg
+        // Auto-import the default SVG file after initialization using importFileByName
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
-          this.floorplan3d.importSvg('FP3D-00-07.svg').then(() => {
+          this.floorplan3d.importFileWithPath('/inkscape-samples/FP3D-00-07.svg').then(() => {
             // Sync layers after auto-import completes
             setTimeout(() => {
               this.syncLayersFromFloorplan3D();
