@@ -247,6 +247,7 @@
 import { reactive } from 'vue';
 
 export default {
+  emits: ['layer-selection-changed'],
   props: {
     floorplan3d: {
       type: Object,
@@ -364,6 +365,8 @@ export default {
       // Set the layer as active using floorplan3d instance
       if (this.floorplan3d) {
         this.floorplan3d.setLayerActive(layerId);
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { layerId, action: 'activate' });
       }
     },
 
@@ -374,6 +377,8 @@ export default {
       // Toggle the layer selection using floorplan3d instance
       if (this.floorplan3d) {
         this.floorplan3d.toggleLayerSelected(layerId);
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { layerId });
       }
     },
     
@@ -394,6 +399,12 @@ export default {
             'ui.displayName', 
             this.newLayerName.trim()
           );
+          // Emit event to parent component to sync layers
+          this.$emit('layer-selection-changed', { 
+            layerId: this.layerToRename.id, 
+            action: 'rename',
+            newName: this.newLayerName.trim()
+          });
         }
         
         // Close the dialog
@@ -432,6 +443,13 @@ export default {
         
         // Update derived properties
         this.updateExtrusionDimensions(layerId);
+        
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'update-extrusion-start',
+          start: clampedStart
+        });
       }
     },
 
@@ -450,6 +468,13 @@ export default {
         
         // Update derived properties
         this.updateExtrusionDimensions(layerId);
+        
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'update-extrusion-height',
+          height: clampedHeight
+        });
       }
     },
 
@@ -472,12 +497,19 @@ export default {
           'layerConfigs.extrusion.height.value', 
           height
         );
+        
+        // Note: Event emission is handled by calling methods (updateExtrusionStart, updateExtrusionHeight)
       }
     },
 
     // Keep the old method for backward compatibility
-    updateExtrusionHeight(layerId) {
+    updateExtrusionHeightLegacy(layerId) {
       this.updateExtrusionDimensions(layerId);
+      // Emit event to parent component to sync layers
+      this.$emit('layer-selection-changed', { 
+        layerId, 
+        action: 'update-extrusion-dimensions-legacy'
+      });
     },
 
     updateExtrusionOpacity(layerId) {
@@ -489,6 +521,35 @@ export default {
           'layerConfigs.extrusion.opacity.value', 
           layer.layerConfigs.extrusion.opacity.value
         );
+        
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'update-extrusion-opacity',
+          opacity: layer.layerConfigs.extrusion.opacity.value
+        });
+      }
+    },
+
+    updateImageOpacity(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Use floorplan3d's updateLayerConfig method and setImageOpacity
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.layer.opacity.value', 
+          layer.layerConfigs.layer.opacity.value
+        );
+        
+        // Also update the image texture opacity
+        this.floorplan3d.setImageOpacity(layer.layerConfigs.layer.opacity.value, layerId);
+        
+        // Emit event to parent component to sync layers
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'update-image-opacity',
+          opacity: layer.layerConfigs.layer.opacity.value
+        });
       }
     }
   }

@@ -26,7 +26,10 @@
         <!-- LayersPanel positioned in corner with padding -->
         <div style="position: absolute; top: 10px; left: 10px; z-index: 50; width: 280px;">
           <div style="position: relative; background-color: white; border: 1px solid #aaa; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
-            <LayersPanel :floorplan3d="floorplan3d" />
+            <LayersPanel 
+              :floorplan3d="floorplan3d" 
+              @layer-selection-changed="onLayerSelectionChanged"
+            />
           </div>
         </div>
       </div>   
@@ -624,6 +627,13 @@ export default {
       } else {
         console.warn('Cannot sync layers: floorplan3d or layerStore not available');
       }
+    },
+
+    // Handle layer selection change event from LayersPanel
+    onLayerSelectionChanged(event) {
+      console.log('Layer selection changed:', event);
+      // Sync layers after selection change
+      this.syncLayersFromFloorplan3D();
     },
 
     toggleLayerSelected(layerId) {
