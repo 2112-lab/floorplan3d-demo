@@ -551,10 +551,10 @@ export default {
         // Set up event listeners for notifications
         this.floorplan3d.addEventListener('notification', this.handleFloorplan3DNotification);
 
-        // Auto-import the default SVG file after initialization using autoImportSvg
+        // Auto-import the default SVG file after initialization using importSvg
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
-          this.floorplan3d.autoImportSvg('FP3D-00-07.svg').then(() => {
+          this.floorplan3d.importSvg('FP3D-00-07.svg').then(() => {
             // Sync layers after auto-import completes
             setTimeout(() => {
               this.syncLayersFromFloorplan3D();
@@ -830,13 +830,7 @@ export default {
         let exportResult;
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         
-        switch (this.selectedExportFormat) {
-          case 'gltf':
-            exportResult = await this.exportSelectedLayersAsGLTF(selectedLayers, timestamp);
-            break;
-          default:
-            throw new Error('Unknown export format');
-        }
+        exportResult = await this.exportSelectedLayersAsGLTF(selectedLayers, timestamp);
 
         if (exportResult) {
           this.showSnackbar(`Export completed: ${exportResult.filename}`, 'success');
@@ -864,89 +858,6 @@ export default {
         return { filename, blob };
       } catch (error) {
         throw new Error(`GLTF export failed: ${error.message}`);
-      }
-    },
-
-    async exportSelectedLayersAsJSON(selectedLayers, timestamp) {
-      // Export layer data as JSON
-      const exportData = {
-        exportDate: new Date().toISOString(),
-        selectedLayers: selectedLayers.map(layer => ({
-          id: layer.id,
-          name: layer.name,
-          displayName: layer.ui?.displayName,
-          active: layer.active,
-          selected: layer.selected,
-          visible: layer.visible,
-          layerConfigs: layer.layerConfigs,
-          metadata: layer.metadata,
-          objectCount: layer.threejsObjects ? layer.threejsObjects.length : 0
-        }))
-      };
-
-      const layerNames = selectedLayers.map(l => l.ui?.displayName || l.name || l.id).join('_');
-      const filename = `selected_layers_data_${layerNames}_${timestamp}.json`;
-      const jsonString = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      
-      this.downloadBlob(blob, filename);
-      return { filename, blob };
-    },
-
-    async exportSelectedLayersAsThreeJS(selectedLayers, timestamp) {
-      try {
-        // Get Three.js objects from selected layers using the Floorplan3D method
-        const objects = this.floorplan3d.getThreeJSObjectsFromSelectedLayers();
-        
-        if (objects.length === 0) {
-          throw new Error('No Three.js objects found in selected layers');
-        }
-
-        // Create a Three.js scene export
-        const sceneData = {
-          metadata: {
-            version: 4.5,
-            type: 'Object',
-            generator: 'Floorplan3D Layer Export'
-          },
-          geometries: [],
-          materials: [],
-          object: {
-            uuid: THREE.MathUtils.generateUUID(),
-            type: 'Scene',
-            children: []
-          }
-        };
-
-        // Process objects
-        objects.forEach(obj => {
-          if (obj && obj.toJSON) {
-            try {
-              const objectData = obj.toJSON();
-              sceneData.object.children.push(objectData.object);
-              
-              // Collect geometries and materials
-              if (objectData.geometries) {
-                sceneData.geometries.push(...objectData.geometries);
-              }
-              if (objectData.materials) {
-                sceneData.materials.push(...objectData.materials);
-              }
-            } catch (e) {
-              console.warn('Failed to serialize object:', e);
-            }
-          }
-        });
-
-        const layerNames = selectedLayers.map(l => l.ui?.displayName || l.name || l.id).join('_');
-        const filename = `selected_layers_threejs_${layerNames}_${timestamp}.json`;
-        const jsonString = JSON.stringify(sceneData, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        
-        this.downloadBlob(blob, filename);
-        return { filename, blob };
-      } catch (error) {
-        throw new Error(`Three.js export failed: ${error.message}`);
       }
     },
 
