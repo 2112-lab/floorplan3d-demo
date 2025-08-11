@@ -722,11 +722,6 @@ export default {
       };
     },
 
-    // Legacy helper methods for backward compatibility
-    getDocument(documentId) {
-      return this.getLayer(documentId);
-    },
-
     toggleLayerSelectedExample() {
       if (!this.floorplan3d || !this.selectedLayerId) {
         this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
@@ -740,20 +735,6 @@ export default {
         this.showSnackbar(`Layer '${this.selectedLayerId}' selection toggled`, 'success');
       } catch (error) {
         this.showSnackbar(`Error toggling layer selection: ${error.message}`, 'error');
-      }
-    },
-
-    async autoImportSvgExample() {
-      if (!this.floorplan3d || !this.selectedSvgFile) {
-        this.showSnackbar('No SVG file selected or Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        await this.floorplan3d.autoImportSvg(this.selectedSvgFile);
-        this.showSnackbar(`SVG '${this.selectedSvgFile}' imported successfully`, 'success');
-      } catch (error) {
-        this.showSnackbar(`Error importing SVG: ${error.message}`, 'error');
       }
     },
     
@@ -801,46 +782,6 @@ export default {
       } catch (error) {
         console.error('Error updating layer config:', error);
         this.showSnackbar(`Error updating layer config: ${error.message}`, 'error');
-      }
-    },
-
-    getSelectedLayersExample() {
-      if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        const selectedDocs = this.floorplan3d.getSelectedLayers();
-        console.log('Selected Documents:', selectedDocs);
-        this.showSnackbar(`Retrieved ${selectedDocs.length} selected documents (check console)`, 'info');
-      } catch (error) {
-        this.showSnackbar(`Error getting selected documents: ${error.message}`, 'error');
-      }
-    },
-
-    // Export functionality methods
-    getSelectedLayersExample() {
-      if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        const selectedLayers = this.floorplan3d.layerStore.getSelectedLayers();
-        const threejsObjects = this.floorplan3d.getThreeJSObjectsFromSelectedLayers();
-        
-        console.log('Selected Layers:', selectedLayers);
-        console.log('Three.js Objects from Selected Layers:', threejsObjects);
-        
-        if (selectedLayers.length === 0) {
-          this.showSnackbar('No layers are currently selected', 'warning');
-        } else {
-          const layerNames = selectedLayers.map(layer => layer.ui?.displayName || layer.name || layer.id);
-          this.showSnackbar(`Selected layers: ${layerNames.join(', ')} (${threejsObjects.length} Three.js objects found - check console)`, 'info');
-        }
-      } catch (error) {
-        this.showSnackbar(`Error getting selected layers: ${error.message}`, 'error');
       }
     },
 

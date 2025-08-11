@@ -490,20 +490,6 @@ export default {
           layer.layerConfigs.extrusion.opacity.value
         );
       }
-    },
-
-    updateImageOpacity(layerId) {
-      const layer = this.layers[layerId];
-      if (layer && this.floorplan3d) {
-        // Update both the layer config and call setImageOpacity for the texture
-        this.floorplan3d.updateLayerConfig(
-          layerId, 
-          'layerConfigs.layer.opacity.value', 
-          layer.layerConfigs.layer.opacity.value
-        );
-        // Also update the image texture opacity
-        this.floorplan3d.setImageOpacity(layer.layerConfigs.layer.opacity.value, layerId);
-      }
     }
   }
 };
