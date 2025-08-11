@@ -66,7 +66,7 @@
             <v-expand-transition>
               <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
-                  Control and manipulate the 3D scene, including image textures
+                  Control and manipulate the 3D scene, including image textures and transparency rendering
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
                   <code class="code-dark">importFile(), resetScene()</code>
@@ -520,11 +520,6 @@ export default {
 
     // Initialize Floorplan3D instance
     initFloorplan3D(containerRef, rendererRef) {
-      // Ensure we're on the client side
-      if (process.server) {
-        console.warn('Attempting to initialize Floorplan3D on server side, skipping');
-        return;
-      }
 
       if (!containerRef || !rendererRef) {
         console.error('Container or renderer ref not available');
@@ -546,15 +541,7 @@ export default {
         // Set up event listeners for notifications
         this.floorplan3d.addEventListener('notification', this.handleFloorplan3DNotification);
 
-        // Subscribe to layer store changes for reactive updates
-        this.floorplan3d.subscribeToDocuments(() => {
-          this.syncLayersFromFloorplan3D();
-        });
-
-        // Make sure the animation is running
-        this.floorplan3d.startAnimation();
-
-        // Auto-import the default SVG file after initialization (changed to test base64 image)
+        // Auto-import the default SVG file after initialization using autoImportSvg
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
           this.floorplan3d.autoImportSvg('FP3D-00-07.svg');
