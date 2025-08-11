@@ -66,7 +66,7 @@
             <v-expand-transition>
               <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
                 <div class="card-description text-caption text--secondary mb-2">
-                  Control and manipulate the 3D scene, including ground plane textures
+                  Control and manipulate the 3D scene, including image textures
                 </div>
                 <div class="card-description text-caption text--secondary mb-3">
                   <code class="code-dark">importFile(), resetScene()</code>
@@ -295,6 +295,73 @@
             </v-expand-transition>
           </v-card>
 
+          <!--Image Opacity Section -->
+          <v-card outlined class="mb-4">
+            <v-card-subtitle 
+              class="d-flex align-center cursor-pointer pa-2" 
+              @click="expandedSections.imageOpacity = !expandedSections.imageOpacity"
+            >
+              <v-icon small class="mr-2" color="teal">mdi-image-outline</v-icon>
+              <span class="font-weight-medium">Image Opacity</span>
+              <v-spacer></v-spacer>
+              <v-icon :class="{ 'rotate-180': expandedSections.imageOpacity }">
+                mdi-chevron-down
+              </v-icon>
+            </v-card-subtitle>
+            <v-expand-transition>
+              <v-card-text v-show="expandedSections.imageOpacity" class="pt-2">
+                <div class="card-description text-caption text--secondary mb-2">
+                  Control opacity of image textures
+                </div>
+                <div class="card-description text-caption text--secondary mb-3">
+                  <code class="code-dark">setImageOpacity(opacity, layerId)</code>
+                </div>
+                
+                <v-select
+                  v-model="selectedImageLayerId"
+                  :items="availableImageLayerIds"
+                  item-title="name"
+                  item-value="id"
+                  label="Image Layer (optional)"
+                  prepend-icon="mdi-image"
+                  dense
+                  outlined
+                  class="mt-4 mb-n3"
+                  :disabled="!floorplan3d"
+                  clearable
+                  hint="Leave empty to affect all images"
+                  persistent-hint
+                />
+                
+                <v-slider
+                  v-model="imageOpacityValue"
+                  label="Opacity"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  thumb-label
+                  dense
+                  class="mt-4 mb-2"
+                  :disabled="!floorplan3d"
+                  prepend-icon="mdi-opacity"
+                />
+                
+                <v-btn
+                  color="teal"
+                  @click="setImageOpacityExample"
+                  :disabled="!floorplan3d"
+                  elevation="2"
+                  block
+                  class="mb-2"
+                >
+                  <v-icon small class="mr-1">mdi-image-outline</v-icon>
+                  Set Image Opacity
+                </v-btn>
+                
+              </v-card-text>
+            </v-expand-transition>
+          </v-card>
+
         </div>
         
       </v-card>
@@ -345,6 +412,7 @@ export default {
         autoImport: false,
         layerConfig: false,
         exportLayers: false,
+        imageOpacity: false,
         quickOps: false,
         dataAccess: false,
       },
@@ -372,6 +440,10 @@ export default {
       // Export functionality data
       selectedExportFormat: 'gltf',
       exportLoading: false,
+
+      // Image opacity data
+      selectedImageLayerId: null,
+      imageOpacityValue: 1.0,
     };
   },
   computed: {
@@ -384,6 +456,19 @@ export default {
         id: id,
         name: layer.ui?.displayName || layer.name || id
       }));
+    },
+
+    availableImageLayerIds() {
+      if (!this.layers || Object.keys(this.layers).length === 0) {
+        return [];
+      }
+      
+      return Object.entries(this.layers)
+        .filter(([id, layer]) => layer.metadata?.category === 'raster')
+        .map(([id, layer]) => ({
+          id: id,
+          name: layer.ui?.displayName || layer.name || id
+        }));
     },
 
     selectedLayersForExport() {
@@ -481,7 +566,7 @@ export default {
         // Auto-import the default SVG file after initialization (changed to test base64 image)
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
-          this.floorplan3d.autoImportSvg('FP3D-00-07.svg'); // This has base64 image and will auto-create ground planes
+          this.floorplan3d.autoImportSvg('FP3D-00-07.svg');
           // Set rooms layer opacity after auto-import
           setTimeout(() => {
             this.setRoomsLayerOpacity(0.30);
@@ -621,7 +706,16 @@ export default {
       
       if (layer) {
         console.log(`Found ${namePattern} layer:`, layer.id, 'Setting opacity to', opacity);
-        this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.extrusion.opacity.value", opacity);
+        
+        // Handle both vector and raster layers
+        if (layer.metadata.category === 'vector') {
+          this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.extrusion.opacity.value", opacity);
+        } else if (layer.metadata.category === 'raster') {
+          // For raster layers, update both the layer config and image texture
+          this.floorplan3d.updateLayerConfig(layer.id, "layerConfigs.layer.opacity.value", opacity);
+          this.floorplan3d.setImageOpacity(opacity, layer.id);
+        }
+        
         this.showSnackbar(`${layer.ui?.displayName || namePattern} layer opacity set to ${opacity}`, 'success');
       } else {
         console.warn(`${namePattern} layer not found`);
@@ -961,6 +1055,31 @@ export default {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    },
+
+    // Image opacity methods
+    setImageOpacityExample() {
+      if (!this.floorplan3d) {
+        this.showSnackbar('Floorplan3D not available', 'error');
+        return;
+      }
+      
+      try {
+        const result = this.floorplan3d.setImageOpacity(
+          this.imageOpacityValue, 
+          this.selectedImageLayerId || null
+        );
+        
+        if (result) {
+          const targetDescription = this.selectedImageLayerId 
+            ? `layer ${this.selectedImageLayerId}` 
+            : 'all images';
+          this.showSnackbar(`Image opacity set to ${this.imageOpacityValue} for ${targetDescription}`, 'success');
+        }
+      } catch (error) {
+        console.error('Error setting image opacity:', error);
+        this.showSnackbar(`Error setting image opacity: ${error.message}`, 'error');
+      }
     },
 
   },
