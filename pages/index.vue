@@ -372,26 +372,6 @@
         
       </v-card>
     </div>
-    
-    <!-- Notification Snackbar -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="snackbar.timeout"
-      top
-      right
-    >
-      {{ snackbar.text }}
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          text
-          v-bind="attrs"
-          @click="snackbar.show = false"
-        >
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
       
   </v-app>
 </template>
@@ -417,12 +397,6 @@ export default {
         layerConfig: false,
         exportLayers: false,
         imageOpacity: false,
-      },
-      snackbar: {
-        show: false,
-        text: '',
-        color: 'success',
-        timeout: 3000,
       },
       // Layer storage - synced from floorplan3d
       layers: {},
@@ -561,13 +535,7 @@ export default {
         console.log('Floorplan3D initialized successfully');
       } catch (error) {
         console.error('Error initializing Floorplan3D:', error);
-        this.showSnackbar(`Failed to initialize: ${error.message}`, 'error');
       }
-    },
-
-    onLayerSelectionChanged(event) {
-      console.log('Layer selection changed:', event);
-      this.syncLayersFromFloorplan3D();
     },
 
     // Cleanup
@@ -614,7 +582,7 @@ export default {
     // Scene Control Methods
     async importFile() {
       if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not initialized', 'error');
+        console.error('Floorplan3D not initialized');
         return;
       }
       
@@ -628,7 +596,7 @@ export default {
 
     resetScene() {
       if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not initialized', 'error');
+        console.error('Floorplan3D not initialized');
         return;
       }
       
@@ -655,16 +623,10 @@ export default {
       });
     },
 
-    showSnackbar(text, color = 'success') {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
-
     // API Example Methods
     toggleLayerSelectedExample() {
       if (!this.floorplan3d || !this.selectedLayerId) {
-        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
+        console.warn('No layer selected or Floorplan3D not available');
         return;
       }
       
@@ -672,15 +634,15 @@ export default {
         this.floorplan3d.toggleLayerSelected(this.selectedLayerId);
         // Sync the layers data to update the reactive state
         this.syncLayersFromFloorplan3D();
-        this.showSnackbar(`Layer '${this.selectedLayerId}' selection toggled`, 'success');
+        console.log(`Layer '${this.selectedLayerId}' selection toggled`);
       } catch (error) {
-        this.showSnackbar(`Error toggling layer selection: ${error.message}`, 'error');
+        console.error(`Error toggling layer selection: ${error.message}`);
       }
     },
     
     updateLayerConfigExample() {
       if (!this.floorplan3d || !this.selectedConfigLayerId || !this.selectedConfigPath || !this.configValue) {
-        this.showSnackbar('Missing required fields for layer config update', 'error');
+        console.warn('Missing required fields for layer config update');
         return;
       }
       
@@ -691,7 +653,7 @@ export default {
         if (this.selectedConfigPath.includes('color')) {
           // Validate hex color format
           if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(this.configValue)) {
-            this.showSnackbar('Color value must be a valid hex color (e.g., #ff0000)', 'error');
+            console.error('Color value must be a valid hex color (e.g., #ff0000)');
             return;
           }
           // Color values are kept as strings
@@ -700,7 +662,7 @@ export default {
           // For numeric values, convert to number
           processedValue = parseFloat(this.configValue);
           if (isNaN(processedValue)) {
-            this.showSnackbar('Config value must be a valid number', 'error');
+            console.error('Config value must be a valid number');
             return;
           }
         }
@@ -710,25 +672,24 @@ export default {
         const result = this.floorplan3d.updateLayerConfig(this.selectedConfigLayerId, this.selectedConfigPath, processedValue);
         
         if (result) {
-          this.showSnackbar(`Layer config updated: ${this.selectedConfigPath} = ${processedValue}`, 'success');
+          console.log(`Layer config updated: ${this.selectedConfigPath} = ${processedValue}`);
         } else {
-          this.showSnackbar(`Layer ${this.selectedConfigLayerId} not found`, 'warning');
+          console.warn(`Layer ${this.selectedConfigLayerId} not found`);
         }
       } catch (error) {
         console.error('Error updating layer config:', error);
-        this.showSnackbar(`Error updating layer config: ${error.message}`, 'error');
       }
     },
 
     async exportSelectedLayersExample() {
       if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
+        console.error('Floorplan3D not available');
         return;
       }
 
       const selectedLayers = this.floorplan3d.layerStore.getSelectedLayers();
       if (selectedLayers.length === 0) {
-        this.showSnackbar('No layers selected for export', 'warning');
+        console.warn('No layers selected for export');
         return;
       }
 
@@ -741,11 +702,10 @@ export default {
         exportResult = await this.exportSelectedLayersAsGLTF(selectedLayers, timestamp);
 
         if (exportResult) {
-          this.showSnackbar(`Export completed: ${exportResult.filename}`, 'success');
+          console.log(`Export completed: ${exportResult.filename}`);
         }
       } catch (error) {
         console.error('Export error:', error);
-        this.showSnackbar(`Export failed: ${error.message}`, 'error');
       } finally {
         this.exportLoading = false;
       }
@@ -783,7 +743,7 @@ export default {
     // Image opacity methods
     setImageOpacityExample() {
       if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
+        console.error('Floorplan3D not available');
         return;
       }
       
@@ -797,11 +757,10 @@ export default {
           const targetDescription = this.selectedImageLayerId 
             ? `layer ${this.selectedImageLayerId}` 
             : 'all images';
-          this.showSnackbar(`Image opacity set to ${this.imageOpacityValue} for ${targetDescription}`, 'success');
+          console.log(`Image opacity set to ${this.imageOpacityValue} for ${targetDescription}`);
         }
       } catch (error) {
         console.error('Error setting image opacity:', error);
-        this.showSnackbar(`Error setting image opacity: ${error.message}`, 'error');
       }
     }
   }
