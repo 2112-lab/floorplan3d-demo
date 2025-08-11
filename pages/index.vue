@@ -434,7 +434,7 @@ export default {
       configPaths: [
         { name: 'Extrusion Start', path: 'layerConfigs.extrusion.start.value' },
         { name: 'Extrusion Height', path: 'layerConfigs.extrusion.height.value' },
-        { name: 'Extrusion Opacity', path: 'layerConfigs.extrusion.opacity.value' },
+        { name: 'Opacity', path: 'layerConfigs.extrusion.opacity.value' },
       ],
 
       // Export functionality data

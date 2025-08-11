@@ -59,9 +59,9 @@
               </v-tooltip>
             </div>
             <div class="layer-controls">
-              <!-- Chevron button to expand 3D controls -->
+              <!-- Chevron button to expand controls -->
               <v-btn 
-                v-if="layer.metadata.category === 'vector'"
+                v-if="layer.metadata.category === 'vector' || layer.metadata.category === 'raster'"
                 variant="text" 
                 size="x-small" 
                 density="compact"
@@ -154,6 +154,42 @@
                   hide-details
                   class="control-slider"
                   @update:model-value="updateExtrusionOpacity(layer.id)"
+                  thumb-size="12"
+                  track-size="2"
+                ></v-slider>
+              </div>
+            </div>
+          </div>
+
+          <!-- Collapsible Controls Section for Raster Layers -->
+          <div 
+            v-if="layer.metadata.category === 'raster' && isControlsExpanded(layer.id)" 
+            class="controls-section" 
+            @click.stop
+          >
+            <div 
+              class="controls-content pa-2"
+              style="background-color: #f8f9fa; border-top: 1px solid #e9ecef;"
+            >
+
+              <!-- Image Opacity Slider -->
+              <div v-if="layer.layerConfigs?.layer?.opacity" class="control-row mb-1">
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-caption">Image Opacity</span>
+                  <span class="text-caption text--secondary">
+                    {{ Math.round(layer.layerConfigs.layer.opacity.value * 100) }}%
+                  </span>
+                </div>
+                <v-slider
+                  v-model="layer.layerConfigs.layer.opacity.value"
+                  :min="0"
+                  :max="1"
+                  :step="0.01"
+                  :disabled="layer.disabled"
+                  density="compact"
+                  hide-details
+                  class="control-slider"
+                  @update:model-value="updateImageOpacity(layer.id)"
                   thumb-size="12"
                   track-size="2"
                 ></v-slider>
@@ -453,6 +489,20 @@ export default {
           'layerConfigs.extrusion.opacity.value', 
           layer.layerConfigs.extrusion.opacity.value
         );
+      }
+    },
+
+    updateImageOpacity(layerId) {
+      const layer = this.layers[layerId];
+      if (layer && this.floorplan3d) {
+        // Update both the layer config and call setImageOpacity for the texture
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.layer.opacity.value', 
+          layer.layerConfigs.layer.opacity.value
+        );
+        // Also update the image texture opacity
+        this.floorplan3d.setImageOpacity(layer.layerConfigs.layer.opacity.value, layerId);
       }
     }
   }
