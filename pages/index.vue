@@ -437,14 +437,21 @@ export default {
   },
   computed: {
     availableLayerIds() {
+      console.log('Computing availableLayerIds - layers object:', this.layers);
+      console.log('Computing availableLayerIds - keys count:', Object.keys(this.layers || {}).length);
+      
       if (!this.layers || Object.keys(this.layers).length === 0) {
+        console.log('No layers available, returning empty array');
         return [];
       }
       
-      return Object.entries(this.layers).map(([id, layer]) => ({
+      const result = Object.entries(this.layers).map(([id, layer]) => ({
         id: id,
         name: layer.ui?.displayName || layer.name || id
       }));
+      
+      console.log('availableLayerIds result:', result);
+      return result;
     },
 
     availableImageLayerIds() {
@@ -544,7 +551,13 @@ export default {
         // Auto-import the default SVG file after initialization using autoImportSvg
         setTimeout(() => {
           console.log('=== CALLING AUTO IMPORT FROM VUE ===');
-          this.floorplan3d.autoImportSvg('FP3D-00-07.svg');
+          this.floorplan3d.autoImportSvg('FP3D-00-07.svg').then(() => {
+            // Sync layers after auto-import completes
+            setTimeout(() => {
+              this.syncLayersFromFloorplan3D();
+              console.log('Layers synced after auto-import');
+            }, 100);
+          });
           // Set rooms layer opacity after auto-import
           setTimeout(() => {
             this.setRoomsLayerOpacity(0.30);
@@ -561,6 +574,14 @@ export default {
     // Handle notifications from Floorplan3D
     handleFloorplan3DNotification(notification) {
       this.showSnackbar(notification.text, notification.type);
+      
+      // Sync layers when SVG import is successful
+      if (notification.type === 'success' && 
+          (notification.text.includes('imported successfully') || 
+           notification.text.includes('Import successful'))) {
+        console.log('SVG import successful, syncing layers...');
+        this.syncLayersFromFloorplan3D();
+      }
     },
 
     // Cleanup Floorplan3D instance
@@ -585,14 +606,23 @@ export default {
     syncLayersFromFloorplan3D() {
       if (this.floorplan3d?.layerStore) {
         const previousSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
-        this.layers = { ...this.floorplan3d.layerStore.layers };
-        const currentSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
+        const previousLayerCount = Object.keys(this.layers).length;
         
-        console.log('Layer sync - Selected layers:', {
-          previous: previousSelectedCount,
-          current: currentSelectedCount,
+        this.layers = { ...this.floorplan3d.layerStore.layers };
+        
+        const currentSelectedCount = Object.values(this.layers).filter(l => l.selected).length;
+        const currentLayerCount = Object.keys(this.layers).length;
+        
+        console.log('Layer sync - Complete:', {
+          previousLayerCount,
+          currentLayerCount,
+          previousSelectedCount,
+          currentSelectedCount,
+          layerIds: Object.keys(this.layers),
           selectedLayers: Object.values(this.layers).filter(l => l.selected).map(l => l.name || l.id)
         });
+      } else {
+        console.warn('Cannot sync layers: floorplan3d or layerStore not available');
       }
     },
 
