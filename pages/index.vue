@@ -130,18 +130,6 @@
                   class="mt-4 mb-n3"
                   :disabled="!floorplan3d || availableLayerIds.length === 0"
                 />
-                
-                <!-- <v-btn
-                  color="success"
-                  @click="setLayerActiveExample"
-                  :disabled="!floorplan3d || !selectedLayerId"
-                  elevation="2"
-                  block
-                  class="mb-2"
-                >
-                  <v-icon small class="mr-1">mdi-eye</v-icon>
-                  Set Layer Active
-                </v-btn> -->
 
                 <v-btn
                   color="info"
@@ -621,28 +609,12 @@ export default {
       }
     },
 
-    // Simplified layer management - delegate to floorplan3d
-    setLayerActive(layerId) {
-      if (this.floorplan3d) {
-        this.floorplan3d.setLayerActive(layerId);
-      }
-    },
-
     toggleLayerSelected(layerId) {
       if (this.floorplan3d) {
         this.floorplan3d.toggleLayerSelected(layerId);
         // Sync the layers data to update the reactive state
         this.syncLayersFromFloorplan3D();
       }
-    },
-
-    // Legacy methods for backward compatibility
-    setDocumentActive(doc_id) {
-      return this.setLayerActive(doc_id);
-    },
-
-    toggleDocumentSelected(documentId) {
-      return this.toggleLayerSelected(documentId);
     },
 
     // Simplified scene control methods - delegate to floorplan3d
@@ -755,25 +727,6 @@ export default {
       return this.getLayer(documentId);
     },
 
-    getActiveDocument() {
-      return this.getActiveLayer();
-    },
-
-    // API Example methods
-    setLayerActiveExample() {
-      if (!this.floorplan3d || !this.selectedLayerId) {
-        this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        this.floorplan3d.setLayerActive(this.selectedLayerId);
-        this.showSnackbar(`Layer '${this.selectedLayerId}' set as active`, 'success');
-      } catch (error) {
-        this.showSnackbar(`Error setting layer active: ${error.message}`, 'error');
-      }
-    },
-
     toggleLayerSelectedExample() {
       if (!this.floorplan3d || !this.selectedLayerId) {
         this.showSnackbar('No layer selected or Floorplan3D not available', 'error');
@@ -851,48 +804,14 @@ export default {
       }
     },
 
-    getAllDocumentsExample() {
+    getSelectedLayersExample() {
       if (!this.floorplan3d) {
         this.showSnackbar('Floorplan3D not available', 'error');
         return;
       }
       
       try {
-        const documents = this.floorplan3d.getAllDocuments();
-        console.log('All Documents:', documents);
-        this.showSnackbar(`Retrieved ${Object.keys(documents).length} documents (check console)`, 'info');
-      } catch (error) {
-        this.showSnackbar(`Error getting documents: ${error.message}`, 'error');
-      }
-    },
-
-    getActiveDocumentExample() {
-      if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        const activeDoc = this.floorplan3d.getActiveDocument();
-        console.log('Active Document:', activeDoc);
-        if (activeDoc) {
-          this.showSnackbar(`Active document: ${activeDoc.name || activeDoc.id} (check console)`, 'info');
-        } else {
-          this.showSnackbar('No active document found', 'warning');
-        }
-      } catch (error) {
-        this.showSnackbar(`Error getting active document: ${error.message}`, 'error');
-      }
-    },
-
-    getSelectedDocumentsExample() {
-      if (!this.floorplan3d) {
-        this.showSnackbar('Floorplan3D not available', 'error');
-        return;
-      }
-      
-      try {
-        const selectedDocs = this.floorplan3d.getSelectedDocuments();
+        const selectedDocs = this.floorplan3d.getSelectedLayers();
         console.log('Selected Documents:', selectedDocs);
         this.showSnackbar(`Retrieved ${selectedDocs.length} selected documents (check console)`, 'info');
       } catch (error) {
