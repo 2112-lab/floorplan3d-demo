@@ -531,7 +531,9 @@ export default {
           setTimeout(() => {
             console.log('Auto-importing default SVG file...');
             this.floorplan3d.importFileWithPath('/samples/FP3D-00-05.svg').then(() => {
-              // Sync layers and set initial opacity after auto-import completes
+              // Sync layers after auto-import completes
+              this.syncLayersFromFloorplan3D();
+              
               setTimeout(() => {
                 const roomsLayer = this.findLayerByName('rooms');
         
@@ -601,6 +603,8 @@ export default {
       
       try {
         await this.floorplan3d.importFile();
+        // Sync layers after successful import
+        this.syncLayersFromFloorplan3D();
       } catch (error) {
         // Error notifications are handled by floorplan3d
         console.error("Error importing file:", error);
@@ -614,6 +618,8 @@ export default {
       }
       
       this.floorplan3d.resetScene();
+      // Sync layers after reset (should clear the layers)
+      this.syncLayersFromFloorplan3D();
     },
 
     // Helper Methods
