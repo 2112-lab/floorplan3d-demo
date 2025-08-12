@@ -5,7 +5,7 @@ applyTo: '**'
 
 ## Local Development Setup
 
-### Central Plant Module Development
+### Floorplan3D Module Development
 - This project uses a **nested repository** setup for the `@2112-lab/floorplan3d` npm module
 - The module source code is located in `./floorplan3d/` directory within the project root
 - The `floorplan3d/` directory has its own `.git` repository, separate from the main app
