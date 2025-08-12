@@ -47,7 +47,7 @@
           <span class="text-h6">API Examples</span>
           <!-- <br> -->
           <a 
-            href="https://floorplan3d-api-docs.s3.us-east-1.amazonaws.com/v1.0.16/global.html" 
+            href="https://floorplan3d-api-docs.s3.us-east-1.amazonaws.com/v1.0.19/module-Floorplan3D-Floorplan3D.html" 
             target="_blank" 
             class="text-decoration-none ml-4 mr-2"
           >
