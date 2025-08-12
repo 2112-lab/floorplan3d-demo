@@ -45,19 +45,32 @@
         <v-card-title class="py-3">
           <v-icon class="mr-2">mdi-api</v-icon>
           <span class="text-h6">API Examples</span>
+          <!-- <br> -->
           <a 
             href="https://floorplan3d-api-docs.s3.us-east-1.amazonaws.com/v1.0.16/global.html" 
+            target="_blank" 
+            class="text-decoration-none ml-4 mr-2"
+          >
+            <v-btn 
+              size="x-small"
+              outlined 
+              color="primary"
+            >
+              Docs
+              <v-icon small class="ml-1">mdi-open-in-new</v-icon>
+            </v-btn>
+          </a>
+          <a 
+            href="https://drive.google.com/drive/u/0/folders/1zTYdIR7x45GfZXizlrEXLFuxftiL4BiS" 
             target="_blank" 
             class="text-decoration-none"
           >
             <v-btn 
-              size="small"
+              size="x-small"
               outlined 
               color="primary"
-              style="margin-left:70px"
             >
-              <v-icon small class="mr-1">mdi-book-open-variant</v-icon>
-              Docs
+              Samples
               <v-icon small class="ml-1">mdi-open-in-new</v-icon>
             </v-btn>
           </a>
@@ -389,6 +402,7 @@ export default {
   },
   data() {
     return {
+      config: useRuntimeConfig(),
       floorplan3d: null,
       expandedSections: {
         sceneControls: true,
@@ -513,23 +527,24 @@ export default {
         // Initialize using Floorplan3D class and mark as raw to prevent Vue reactivity
         this.floorplan3d = markRaw(new Floorplan3D(rendererRef, width, height));
 
-
-        // Auto-import the default SVG file after initialization
-        setTimeout(() => {
-          console.log('Auto-importing default SVG file...');
-          this.floorplan3d.importFileWithPath('/inkscape-samples/FP3D-00-07.svg').then(() => {
-            // Sync layers and set initial opacity after auto-import completes
-            setTimeout(() => {
-              const roomsLayer = this.findLayerByName('rooms');
-      
-              if (roomsLayer) {
-                this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
-              }
-              
-              console.log('Auto-import complete');
-            }, 100);
-          });
-        }, 500);
+        // Testing imports when using LOCAL_DEV 
+        if(this.config.public.LOCAL_DEV ) {
+          setTimeout(() => {
+            console.log('Auto-importing default SVG file...');
+            this.floorplan3d.importFileWithPath('/samples/FP3D-00-05.svg').then(() => {
+              // Sync layers and set initial opacity after auto-import completes
+              setTimeout(() => {
+                const roomsLayer = this.findLayerByName('rooms');
+        
+                if (roomsLayer) {
+                  this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
+                }
+                
+                console.log('Auto-import complete');
+              }, 100);
+            });
+          }, 500);
+        }        
 
         console.log('Floorplan3D initialized successfully');
       } catch (error) {

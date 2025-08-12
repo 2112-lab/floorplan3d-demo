@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "cross-env LOCAL_DEV=true nuxt dev",
+    "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -15,17 +15,13 @@
     "@mdi/font": "^7.4.47",
     "@nuxtjs/toast": "^3.3.1",
     "@pinia/nuxt": "^0.10.1",
-    "cross-env": "^10.0.0",
-    "lodash": "^4.17.21",
     "nuxt": "^3.16.2",
     "pinia": "^3.0.1",
-    "three": "^0.175.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "vite-plugin-vuetify": "^2.1.0",
-    "vuetify": "^3.8.0",
-    "webpack-obfuscator": "^3.5.1"
+    "vuetify": "^3.8.0"
   }
 }
