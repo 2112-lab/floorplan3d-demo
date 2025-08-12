@@ -377,7 +377,6 @@
 </template>
 
 <script>
-import * as THREE from 'three';
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import Floorplan3D from "@2112-lab/floorplan3d";

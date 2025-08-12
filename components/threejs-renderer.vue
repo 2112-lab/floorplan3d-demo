@@ -6,11 +6,6 @@
 
 <script>
 export default {
-  data() {
-    return {
-      // Just a simple container component now
-    };
-  },
   mounted() {
     // Emit the renderer element reference to parent for initialization
     this.$emit('container-ready', {
