@@ -393,7 +393,6 @@
 import ThreejsRenderer from "~/components/threejs-renderer.vue";
 import LayersPanel  from "~/components/layers-panel.vue";
 import Floorplan3D from "@2112-lab/floorplan3d";
-import { markRaw } from 'vue';
 
 export default {
   components: {
@@ -524,8 +523,8 @@ export default {
       }
 
       try {
-        // Initialize using Floorplan3D class and mark as raw to prevent Vue reactivity
-        this.floorplan3d = markRaw(new Floorplan3D(rendererRef, width, height));
+        // Initialize using Floorplan3D class and use shallowRef to prevent deep reactivity
+        this.floorplan3d = new Floorplan3D(rendererRef, width, height);
 
         // Testing imports when using LOCAL_DEV 
         if(this.config.public.LOCAL_DEV ) {
