@@ -526,26 +526,26 @@ export default {
         // Initialize using Floorplan3D class and use shallowRef to prevent deep reactivity
         this.floorplan3d = new Floorplan3D(rendererRef, width, height);
 
-        // Testing imports when using LOCAL_DEV 
-        if(this.config.public.LOCAL_DEV ) {
-          setTimeout(() => {
-            console.log('Auto-importing default SVG file...');
-            this.floorplan3d.importFileWithPath('/samples/FP3D-00-05.svg').then(() => {
-              // Sync layers after auto-import completes
-              this.syncLayersFromFloorplan3D();
+        // // Testing imports when using LOCAL_DEV 
+        // if(this.config.public.LOCAL_DEV ) {
+        //   setTimeout(() => {
+        //     console.log('Auto-importing default SVG file...');
+        //     this.floorplan3d.importFileWithPath('/samples/FP3D-00-05.svg').then(() => {
+        //       // Sync layers after auto-import completes
+        //       this.syncLayersFromFloorplan3D();
               
-              setTimeout(() => {
-                const roomsLayer = this.findLayerByName('rooms');
+        //       setTimeout(() => {
+        //         const roomsLayer = this.findLayerByName('rooms');
         
-                if (roomsLayer) {
-                  this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
-                }
+        //         if (roomsLayer) {
+        //           this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
+        //         }
                 
-                console.log('Auto-import complete');
-              }, 100);
-            });
-          }, 500);
-        }        
+        //         console.log('Auto-import complete');
+        //       }, 100);
+        //     });
+        //   }, 500);
+        // }        
 
         console.log('Floorplan3D initialized successfully');
       } catch (error) {
