@@ -36,6 +36,16 @@
                 class="mr-0 mt-0 mb-0 ml-0 compact-checkbox"
                 @click.stop="toggleLayerSelected(layer.id)"
               ></v-checkbox>
+
+              <!-- Opacity Toggle Icon -->
+              <v-icon 
+                color="black" 
+                class="mr-1"
+                @click.stop="toggleLayerOpacity(layer.id)"
+                style="cursor: pointer;"
+              >
+                {{ isLayerVisible(layer) ? 'mdi-video-3d' : 'mdi-video-3d-off' }}
+              </v-icon>
             
               <span 
                 :class="{ 'text--disabled': layer.disabled }"
@@ -59,6 +69,7 @@
               </v-tooltip>
             </div>
             <div class="layer-controls">
+              
               <!-- Chevron button to expand controls -->
               <v-btn 
                 v-if="layer.metadata.category === 'vector' || layer.metadata.category === 'raster'"
@@ -541,6 +552,71 @@ export default {
           opacity: layer.layerConfigs.layer.opacity.value
         });
       }
+    },
+
+    // Toggle layer opacity between 0% and 100%
+    toggleLayerOpacity(layerId) {
+      const layer = this.layers[layerId];
+      if (layer?.disabled || !this.floorplan3d) return;
+      
+      // Determine which opacity to toggle based on layer type
+      const isVectorLayer = layer.metadata.category === 'vector';
+      const isRasterLayer = layer.metadata.category === 'raster';
+      
+      if (isVectorLayer && layer.layerConfigs?.extrusion?.opacity) {
+        // For vector layers, toggle extrusion opacity
+        const currentOpacity = layer.layerConfigs.extrusion.opacity.value;
+        const newOpacity = currentOpacity === 0 ? 1 : 0;
+        
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.extrusion.opacity.value', 
+          newOpacity
+        );
+        
+        // Emit event to parent component
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'toggle-opacity',
+          opacity: newOpacity
+        });
+      } else if (isRasterLayer && layer.layerConfigs?.layer?.opacity) {
+        // For raster layers, toggle image opacity
+        const currentOpacity = layer.layerConfigs.layer.opacity.value;
+        const newOpacity = currentOpacity === 0 ? 1 : 0;
+        
+        this.floorplan3d.updateLayerConfig(
+          layerId, 
+          'layerConfigs.layer.opacity.value', 
+          newOpacity
+        );
+        
+        // Also update the image texture opacity
+        this.floorplan3d.setImageOpacity(newOpacity, layerId);
+        
+        // Emit event to parent component
+        this.$emit('layer-selection-changed', { 
+          layerId, 
+          action: 'toggle-opacity',
+          opacity: newOpacity
+        });
+      }
+    },
+
+    // Check if layer is visible (opacity > 0)
+    isLayerVisible(layer) {
+      if (layer.metadata.category === 'vector' && layer.layerConfigs?.extrusion?.opacity) {
+        return layer.layerConfigs.extrusion.opacity.value > 0;
+      } else if (layer.metadata.category === 'raster' && layer.layerConfigs?.layer?.opacity) {
+        return layer.layerConfigs.layer.opacity.value > 0;
+      }
+      return true; // Default to visible if no opacity config
+    },
+
+    // Get tooltip text for opacity button
+    getOpacityTooltip(layer) {
+      const isVisible = this.isLayerVisible(layer);
+      return isVisible ? 'Hide layer (set opacity to 0%)' : 'Show layer (set opacity to 100%)';
     }
   }
 };
