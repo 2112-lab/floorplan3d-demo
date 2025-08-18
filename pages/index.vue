@@ -43,6 +43,7 @@
           :floorplan3d="floorplan3d"
           @container-ready="onContainerReady"
           @container-destroyed="onContainerDestroyed"
+          style="border:1px solid black; background: linear-gradient(to bottom, #a3b6d8, #ffffff)"
         />
         
         <!-- LayersPanel positioned in corner with padding -->
