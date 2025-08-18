@@ -24,7 +24,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap');
 .rubik-mono-one-regular {
     font-family: "Rubik Mono One", monospace;

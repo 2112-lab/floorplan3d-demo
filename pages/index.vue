@@ -1,18 +1,40 @@
  
 <template> 
   <!-- Main application container with light background -->
-  <v-app id="appContainer" style="background-color:#f5f5f5;">     
+  <v-app id="appContainer" style="background-color:#f5f5f5;">
+    <!-- Top Navigation Bar -->
+    <!-- Top navigation bar -->
+    <v-app-bar 
+      color="#fff"
+      style="
+        font-family:'Amazon Ember', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; 
+        position:relative; 
+        z-index:1; 
+        height: 64px !important; 
+        min-height: 64px !important; 
+        max-height: 64px !important;
+      "
+    >
+      <!-- App title with link to home -->
+      <v-toolbar-title>
+        <router-link to="/" style="text-decoration: none; color: inherit;">
+          <span class="rubik-mono-one-regular">Floorplan3D Demo</span>
+        </router-link>
+      </v-toolbar-title>
+    </v-app-bar>
+    
     <!-- Hidden SVG renderer for dependencies (no longer uses Konva) -->
     <div style="display: none">
       <div ref="hiddenContainer"></div>
     </div>
 
     <!-- Main content area - flexible layout with primary viewport and right sidebar -->    
-    <div style="display: flex; height: calc(100vh); width: 100%; overflow: hidden;">      
+    <v-main>
+      <div style="display: flex; width: 100%; overflow: hidden;">      
       <div 
         id="threejs-container" 
         ref="threejsContainer"
-        style="position:absolute; top:20px; left:20px; right:420px; bottom:20px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12)"
+        style="position:absolute; top:84px; left:20px; right:420px; bottom:20px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12)"
       >
         <!-- ThreeJS Renderer -->
         <ThreejsRenderer 
@@ -36,7 +58,7 @@
     </div>    
     
     <!-- API Examples Panel - Right Sidebar -->
-    <div style="position: fixed; top: 20px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
+    <div style="position: fixed; top: 84px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
       <v-card 
         elevation="4" 
         style="height: 100%; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: flex; flex-direction: column;"
@@ -385,6 +407,7 @@
         
       </v-card>
     </div>
+    </v-main>
       
   </v-app>
 </template>
@@ -524,7 +547,28 @@ export default {
 
       try {
         // Initialize using Floorplan3D class and use shallowRef to prevent deep reactivity
-        this.floorplan3d = new Floorplan3D(rendererRef, width, height);     
+        this.floorplan3d = new Floorplan3D(rendererRef, width, height);
+
+        // Testing imports when using LOCAL_DEV 
+        if(this.config.public.LOCAL_DEV ) {
+          setTimeout(() => {
+            console.log('Auto-importing default SVG file...');
+            this.floorplan3d.importFileWithPath('/samples/FP3D-00-05.svg').then(() => {
+              // Sync layers after auto-import completes
+              this.syncLayersFromFloorplan3D();
+              
+              setTimeout(() => {
+                const roomsLayer = this.findLayerByName('rooms');
+        
+                if (roomsLayer) {
+                  this.floorplan3d.updateLayerConfig(roomsLayer.id, "layerConfigs.extrusion.opacity.value", 0.5);
+                }
+                
+                console.log('Auto-import complete');
+              }, 100);
+            });
+          }, 500);
+        }        
 
         console.log('Floorplan3D initialized successfully');
       } catch (error) {
