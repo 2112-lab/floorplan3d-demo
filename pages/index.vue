@@ -503,33 +503,6 @@ export default {
     this.cleanupFloorplan3D();
   },
   methods: {
-    // Component Lifecycle & Setup
-    getConfigValueHint() {
-      if (!this.selectedConfigPath) return 'Select a configuration path first';
-      
-      if (this.selectedConfigPath.includes('opacity')) {
-        return 'Opacity value (0.0 to 1.0)';
-      } else if (this.selectedConfigPath.includes('start') || this.selectedConfigPath.includes('end') || this.selectedConfigPath.includes('height')) {
-        return 'Height/position value (number, can be negative)';
-      } else if (this.selectedConfigPath.includes('color')) {
-        return 'Hex color value (e.g., #ff0000, #00ff00, #0000ff)';
-      }
-      
-      return 'Numeric value';
-    },
-
-    onContainerReady({ container, renderer }) {
-      console.log('Container ready, initializing Floorplan3D...');
-      this.$nextTick(() => {
-        this.initFloorplan3D(container, renderer);
-      });
-    },
-
-    onContainerDestroyed() {
-      console.log('Container destroyed, cleaning up Floorplan3D...');
-      this.cleanupFloorplan3D();
-    },
-
     // Floorplan3D Initialization & Cleanup
     initFloorplan3D(containerRef, rendererRef) {
 
@@ -575,6 +548,33 @@ export default {
       } catch (error) {
         console.error('Error initializing Floorplan3D:', error);
       }
+    },
+    
+    // Component Lifecycle & Setup
+    getConfigValueHint() {
+      if (!this.selectedConfigPath) return 'Select a configuration path first';
+      
+      if (this.selectedConfigPath.includes('opacity')) {
+        return 'Opacity value (0.0 to 1.0)';
+      } else if (this.selectedConfigPath.includes('start') || this.selectedConfigPath.includes('end') || this.selectedConfigPath.includes('height')) {
+        return 'Height/position value (number, can be negative)';
+      } else if (this.selectedConfigPath.includes('color')) {
+        return 'Hex color value (e.g., #ff0000, #00ff00, #0000ff)';
+      }
+      
+      return 'Numeric value';
+    },
+
+    onContainerReady({ container, renderer }) {
+      console.log('Container ready, initializing Floorplan3D...');
+      this.$nextTick(() => {
+        this.initFloorplan3D(container, renderer);
+      });
+    },
+
+    onContainerDestroyed() {
+      console.log('Container destroyed, cleaning up Floorplan3D...');
+      this.cleanupFloorplan3D();
     },
 
     // Cleanup
