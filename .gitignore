@@ -29,3 +29,7 @@ dev
 lambdas
 
 floorplan3d
+
+release-workflow/test-results/
+release-workflow/playwright-report/g*
+release-workflow/playwright-report/*

@@ -8,7 +8,16 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "fp": "npm install @2112-lab/floorplan3d@latest"
+    "fp": "npm install @2112-lab/floorplan3d@latest",
+    "test": "playwright test --config=release-workflow/playwright.config.ts",
+    "test:headed": "playwright test --config=release-workflow/playwright.config.ts --headed",
+    "test:ui": "playwright test --config=release-workflow/playwright.config.ts --ui",
+    "test:debug": "playwright test --config=release-workflow/playwright.config.ts --debug",
+    "test:copilot:visual": "cross-env COPILOT_VISUAL_TESTS=true playwright test tests/copilot-visual.test.ts --config=release-workflow/playwright.config.ts",
+    "test:copilot:analyze": "cross-env COPILOT_VISUAL_TESTS=true playwright test tests/copilot-visual.test.ts --config=release-workflow/playwright.config.ts --reporter=line",
+    "test:copilot:headed": "cross-env COPILOT_VISUAL_TESTS=true playwright test tests/copilot-visual.test.ts --config=release-workflow/playwright.config.ts --headed",
+    "test:copilot:single": "cross-env COPILOT_VISUAL_TESTS=true playwright test tests/copilot-single-task.test.ts --config=release-workflow/playwright.config.ts --reporter=line",
+    "test:copilot:single:headed": "cross-env COPILOT_VISUAL_TESTS=true playwright test tests/copilot-single-task.test.ts --config=release-workflow/playwright.config.ts --headed"
   },
   "dependencies": {
     "@2112-lab/floorplan3d": "^1.0.21",
@@ -21,6 +30,10 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.3.0",
+    "cross-env": "^10.0.0",
+    "typescript": "^5.9.2",
     "vite-plugin-vuetify": "^2.1.0",
     "vuetify": "^3.8.0"
   }
