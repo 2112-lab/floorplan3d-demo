@@ -1,11 +1,12 @@
  
 <template> 
   <!-- Main application container with light background -->
-  <v-app id="appContainer" style="background-color:#f5f5f5;">
+  <v-app id="appContainer" style="background-color:#f5f5f5;" data-testid="app-container">
     <!-- Top Navigation Bar -->
     <!-- Top navigation bar -->
     <v-app-bar 
       color="#fff"
+      data-testid="main-navigation-bar"
       style="
         font-family:'Amazon Ember', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; 
         position:relative; 
@@ -16,9 +17,9 @@
       "
     >
       <!-- App title with link to home -->
-      <v-toolbar-title>
-        <router-link to="/" style="text-decoration: none; color: inherit;">
-          <span class="rubik-mono-one-regular">Floorplan3D Demo</span>
+      <v-toolbar-title data-testid="app-title">
+        <router-link to="/" style="text-decoration: none; color: inherit;" data-testid="app-title-link">
+          <span class="rubik-mono-one-regular" data-testid="app-title-text">Floorplan3D Demo</span>
         </router-link>
       </v-toolbar-title>
     </v-app-bar>
@@ -29,11 +30,12 @@
     </div>
 
     <!-- Main content area - flexible layout with primary viewport and right sidebar -->    
-    <v-main>
+    <v-main data-testid="main-content-area">
       <div style="display: flex; width: 100%; overflow: hidden;">      
       <div 
         id="threejs-container" 
         ref="threejsContainer"
+        data-testid="threejs-container"
         style="position:absolute; top:84px; left:20px; right:420px; bottom:20px; box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12)"
       >
         <!-- ThreeJS Renderer -->
@@ -62,6 +64,7 @@
     <div style="position: fixed; top: 84px; right: 20px; bottom: 20px; width: 380px; z-index: 100;">
       <v-card 
         elevation="4" 
+        data-testid="api-examples-panel"
         style="height: 100%; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); display: flex; flex-direction: column;"
       >
         <!-- Header -->
@@ -78,6 +81,7 @@
               size="x-small"
               outlined 
               color="primary"
+              data-testid="api-docs-button"
             >
               Docs
               <v-icon small class="ml-1">mdi-open-in-new</v-icon>
@@ -92,6 +96,7 @@
               size="x-small"
               outlined 
               color="primary"
+              data-testid="api-samples-button"
             >
               Samples
               <v-icon small class="ml-1">mdi-open-in-new</v-icon>
@@ -105,10 +110,11 @@
         <div style="flex: 1; overflow-y: auto; padding: 16px;">
           
           <!-- Scene Controls Section -->
-          <v-card outlined class="mb-4">
+          <v-card outlined class="mb-4" data-testid="scene-controls-section">
             <v-card-subtitle 
               class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.sceneControls = !expandedSections.sceneControls"
+              data-testid="scene-controls-toggle"
             >
               <v-icon small class="mr-2" color="primary">mdi-cube-outline</v-icon>
               <span class="font-weight-medium">Scene Controls</span>
@@ -118,7 +124,7 @@
               </v-icon>
             </v-card-subtitle>
             <v-expand-transition>
-              <v-card-text v-show="expandedSections.sceneControls" class="pt-2">
+              <v-card-text v-show="expandedSections.sceneControls" class="pt-2" data-testid="scene-controls-content">
                 <div class="card-description text-caption text--secondary mb-2">
                   Control and manipulate the 3D scene, including image textures and transparency rendering
                 </div>
@@ -131,6 +137,7 @@
                   @click="importFile"
                   block
                   class="mb-2"
+                  data-testid="import-file-button"
                 >
                   <v-icon small class="mr-1">mdi-import</v-icon>
                   Import File
@@ -141,6 +148,7 @@
                   @click="resetScene"
                   block
                   class="mb-2"
+                  data-testid="reset-scene-button"
                 >
                   <v-icon small class="mr-1">mdi-refresh</v-icon>
                   Reset Scene
@@ -155,6 +163,7 @@
             <v-card-subtitle 
               class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.layerManagement = !expandedSections.layerManagement"
+              data-testid="layer-management-toggle"
             >
               <v-icon small class="mr-2" color="success">mdi-layers</v-icon>
               <span class="font-weight-medium">Layer Management</span>
@@ -164,7 +173,7 @@
               </v-icon>
             </v-card-subtitle>
             <v-expand-transition>
-              <v-card-text v-show="expandedSections.layerManagement" class="pt-2">
+              <v-card-text v-show="expandedSections.layerManagement" class="pt-2" data-testid="layer-management-content">
                 <div class="card-description text-caption text--secondary mb-2">
                   Manage layers in the scene
                 </div>
@@ -183,6 +192,7 @@
                   outlined
                   class="mt-4 mb-n3"
                   :disabled="!floorplan3d || availableLayerIds.length === 0"
+                  data-testid="layer-select-dropdown"
                 />
 
                 <v-btn
@@ -191,6 +201,7 @@
                   :disabled="!floorplan3d || !selectedLayerId"
                   elevation="2"
                   block
+                  data-testid="toggle-layer-button"
                 >
                   <v-icon small class="mr-1">mdi-checkbox-marked-circle</v-icon>
                   Toggle Layer Selection
@@ -204,6 +215,7 @@
             <v-card-subtitle 
               class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.layerConfig = !expandedSections.layerConfig"
+              data-testid="layer-config-toggle"
             >
               <v-icon small class="mr-2" color="warning">mdi-cog</v-icon>
               <span class="font-weight-medium">Layer Configuration</span>
@@ -213,7 +225,7 @@
               </v-icon>
             </v-card-subtitle>
             <v-expand-transition>
-              <v-card-text v-show="expandedSections.layerConfig" class="pt-2">
+              <v-card-text v-show="expandedSections.layerConfig" class="pt-2" data-testid="layer-config-content">
                 <div class="card-description text-caption text--secondary mb-2">
                   Update layer configuration properties
                 </div>
@@ -232,6 +244,7 @@
                   outlined
                   class="mt-4 mb-n3"
                   :disabled="!floorplan3d || availableLayerIds.length === 0"
+                  data-testid="config-layer-select"
                 />
                 
                 <v-select
@@ -245,6 +258,7 @@
                   outlined
                   class="mb-n3"
                   :disabled="!floorplan3d"
+                  data-testid="config-path-select"
                 />
                 
                 <v-text-field
@@ -257,6 +271,7 @@
                   :disabled="!floorplan3d"
                   :hint="getConfigValueHint()"
                   persistent-hint
+                  data-testid="config-value-input"
                 />
                 
                 <v-btn
@@ -266,6 +281,7 @@
                   elevation="2"
                   block
                   class="mb-2"
+                  data-testid="update-config-button"
                 >
                   <v-icon small class="mr-1">mdi-cog</v-icon>
                   Update Config
@@ -280,6 +296,7 @@
             <v-card-subtitle 
               class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.imageOpacity = !expandedSections.imageOpacity"
+              data-testid="image-opacity-toggle"
             >
               <v-icon small class="mr-2" color="teal">mdi-image-outline</v-icon>
               <span class="font-weight-medium">Image Opacity</span>
@@ -289,7 +306,7 @@
               </v-icon>
             </v-card-subtitle>
             <v-expand-transition>
-              <v-card-text v-show="expandedSections.imageOpacity" class="pt-2">
+              <v-card-text v-show="expandedSections.imageOpacity" class="pt-2" data-testid="image-opacity-content">
                 <div class="card-description text-caption text--secondary mb-2">
                   Control opacity of image textures
                 </div>
@@ -311,6 +328,7 @@
                   clearable
                   hint="Leave empty to affect all images"
                   persistent-hint
+                  data-testid="image-layer-select"
                 />
                 
                 <v-slider
@@ -324,6 +342,7 @@
                   class="mt-7 mb-0"
                   :disabled="!floorplan3d"
                   prepend-icon="mdi-opacity"
+                  data-testid="opacity-slider"
                 />
                 
                 <v-btn
@@ -333,6 +352,7 @@
                   elevation="2"
                   block
                   class="mb-2"
+                  data-testid="set-opacity-button"
                 >
                   <v-icon small class="mr-1">mdi-image-outline</v-icon>
                   Set Image Opacity
@@ -347,6 +367,7 @@
             <v-card-subtitle 
               class="d-flex align-center cursor-pointer pa-2" 
               @click="expandedSections.exportLayers = !expandedSections.exportLayers"
+              data-testid="export-layers-toggle"
             >
               <v-icon small class="mr-2" color="purple">mdi-download</v-icon>
               <span class="font-weight-medium">Export Selected Layers</span>
@@ -356,7 +377,7 @@
               </v-icon>
             </v-card-subtitle>
             <v-expand-transition>
-              <v-card-text v-show="expandedSections.exportLayers" class="pt-2">
+              <v-card-text v-show="expandedSections.exportLayers" class="pt-2" data-testid="export-layers-content">
                 <div class="card-description text-caption text--secondary mb-2">
                   Export Three.js geometry from selected layers
                 </div>
@@ -365,7 +386,7 @@
                 </div>
                 
                 <!-- Selected layers display -->
-                <v-chip-group class="mb-3">
+                <v-chip-group class="mb-3" data-testid="selected-layers-display">
                   <v-chip
                     v-for="layer in selectedLayersForExport"
                     :key="layer.id"
@@ -395,6 +416,7 @@
                   block
                   class="mb-2"
                   :loading="exportLoading"
+                  data-testid="export-layers-button"
                 >
                   <v-icon small class="mr-1">mdi-download</v-icon>
                   Export Selected Layers
